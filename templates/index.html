@@ -7,18 +7,25 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Люблю Лейлу</h1>
-            <p class="subtitle">Проверка текста на оригинальность, заимствования и ИИ-контент</p>
-        </header>
+<div class="container">
+    <header>
+        <h1>Люблю Лейлу</h1>
+        <p class="subtitle">Проверка текста на оригинальность, заимствования и ИИ-контент</p>
+    </header>
 
-        <main>
+    <main>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="check">Проверить</button>
+            <button class="tab" data-tab="rewrite">Переписать под человека</button>
+            <button class="tab" data-tab="api">API</button>
+        </div>
+
+        <!-- TAB: CHECK -->
+        <div id="tab-check" class="tab-content active">
             <div class="input-section">
                 <div class="counter"><span id="charCount">0</span> / 10 000 символов</div>
-                <textarea id="textInput"
-                    placeholder="Вставьте текст для проверки (минимум 50 символов)..."
-                    maxlength="10000"></textarea>
+                <textarea id="textInput" placeholder="Вставьте текст для проверки (минимум 50 символов)..." maxlength="10000"></textarea>
                 <div class="actions">
                     <button id="clearBtn" class="btn-secondary">Очистить</button>
                     <button id="checkBtn" class="btn-primary">
@@ -28,33 +35,55 @@
                 </div>
             </div>
 
-            <div id="result" class="result-section" style="display:none">
+            <div id="result" style="display:none">
 
-                <!-- 4 главных блока -->
-                <div class="four-grid">
-                    <div class="metric-card" id="card-orig">
-                        <div class="mc-icon">✦</div>
-                        <div class="mc-val" id="val-orig">—</div>
-                        <div class="mc-label">Оригинальность</div>
-                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-orig"></div></div>
+                <!-- Антиплагиат-стиль -->
+                <div class="antiplagiat-card">
+                    <div class="ap-header">
+                        <span class="ap-logo">АнтиИИ</span>
+                        <span class="ap-date" id="apDate"></span>
                     </div>
-                    <div class="metric-card" id="card-bor">
-                        <div class="mc-icon">⇄</div>
-                        <div class="mc-val" id="val-bor">—</div>
-                        <div class="mc-label">Заимствование</div>
-                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-bor"></div></div>
-                    </div>
-                    <div class="metric-card" id="card-cit">
-                        <div class="mc-icon">❝</div>
-                        <div class="mc-val" id="val-cit">—</div>
-                        <div class="mc-label">Цитирование</div>
-                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-cit"></div></div>
-                    </div>
-                    <div class="metric-card" id="card-ai">
-                        <div class="mc-icon">⚡</div>
-                        <div class="mc-val" id="val-ai">—</div>
-                        <div class="mc-label">ИИ-контент</div>
-                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-ai"></div></div>
+                    <div class="ap-grid">
+                        <div class="ap-block" id="ap-orig">
+                            <div class="ap-ring-wrap">
+                                <svg viewBox="0 0 80 80">
+                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
+                                    <circle class="ap-prog" id="ring-orig" cx="40" cy="40" r="34"/>
+                                </svg>
+                                <span class="ap-ring-val" id="rval-orig">—</span>
+                            </div>
+                            <div class="ap-block-label">Оригинальность</div>
+                        </div>
+                        <div class="ap-block" id="ap-bor">
+                            <div class="ap-ring-wrap">
+                                <svg viewBox="0 0 80 80">
+                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
+                                    <circle class="ap-prog" id="ring-bor" cx="40" cy="40" r="34"/>
+                                </svg>
+                                <span class="ap-ring-val" id="rval-bor">—</span>
+                            </div>
+                            <div class="ap-block-label">Заимствование</div>
+                        </div>
+                        <div class="ap-block" id="ap-cit">
+                            <div class="ap-ring-wrap">
+                                <svg viewBox="0 0 80 80">
+                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
+                                    <circle class="ap-prog" id="ring-cit" cx="40" cy="40" r="34"/>
+                                </svg>
+                                <span class="ap-ring-val" id="rval-cit">—</span>
+                            </div>
+                            <div class="ap-block-label">Цитирование</div>
+                        </div>
+                        <div class="ap-block" id="ap-ai">
+                            <div class="ap-ring-wrap">
+                                <svg viewBox="0 0 80 80">
+                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
+                                    <circle class="ap-prog" id="ring-ai" cx="40" cy="40" r="34"/>
+                                </svg>
+                                <span class="ap-ring-val" id="rval-ai">—</span>
+                            </div>
+                            <div class="ap-block-label">ИИ-контент</div>
+                        </div>
                     </div>
                 </div>
 
@@ -62,181 +91,294 @@
                 <div class="result-card">
                     <h3 class="card-title">Статистика текста</h3>
                     <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="stat-val" id="statChars">—</span>
-                            <span class="stat-label">символов</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-val" id="statWords">—</span>
-                            <span class="stat-label">слов</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-val" id="statSents">—</span>
-                            <span class="stat-label">предложений</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-val" id="statUnique">—</span>
-                            <span class="stat-label">уникальных слов</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-val" id="statAvg">—</span>
-                            <span class="stat-label">слов/предложение</span>
-                        </div>
+                        <div class="stat-item"><span class="stat-val" id="statChars">—</span><span class="stat-label">символов</span></div>
+                        <div class="stat-item"><span class="stat-val" id="statWords">—</span><span class="stat-label">слов</span></div>
+                        <div class="stat-item"><span class="stat-val" id="statSents">—</span><span class="stat-label">предложений</span></div>
+                        <div class="stat-item"><span class="stat-val" id="statUnique">—</span><span class="stat-label">уникальных слов</span></div>
+                        <div class="stat-item"><span class="stat-val" id="statAvg">—</span><span class="stat-label">слов/предл.</span></div>
                     </div>
                 </div>
 
-                <!-- Подсветка текста -->
+                <!-- Подсветка -->
                 <div class="result-card" id="highlightCard" style="display:none">
                     <h3 class="card-title">Подсветка ИИ-контента</h3>
                     <div class="highlight-legend">
-                        <span class="leg-item"><span class="leg-dot" style="background:#ef444488"></span> Высокая вероятность ИИ</span>
-                        <span class="leg-item"><span class="leg-dot" style="background:#f97316aa"></span> Средняя вероятность</span>
-                        <span class="leg-item"><span class="leg-dot" style="background:transparent;border:1px solid #334155"></span> Оригинальный текст</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#ef444488"></span>Высокая вероятность ИИ</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#f9741688"></span>Средняя вероятность</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#33415580"></span>Оригинальный текст</span>
                     </div>
                     <div id="highlightBody" class="highlight-body"></div>
                 </div>
 
-                <!-- Детали -->
-                <div class="result-card" id="detailsCard">
+                <!-- Маркеры -->
+                <div class="result-card" id="detailsCard" style="display:none">
                     <h3 class="card-title">Найденные маркеры</h3>
                     <div id="detailsBody"></div>
                 </div>
 
             </div>
-
             <div id="errorBox" class="error-box" style="display:none"></div>
-        </main>
+        </div>
 
-        <footer>
-            <p>Локальный анализ &bull; Без API &bull; Результат носит оценочный характер</p>
-        </footer>
-    </div>
+        <!-- TAB: REWRITE -->
+        <div id="tab-rewrite" class="tab-content">
+            <div class="input-section">
+                <div class="counter"><span id="rwCharCount">0</span> / 10 000 символов</div>
+                <textarea id="rwInput" placeholder="Вставьте текст с ИИ-фразами — замените их на человеческие..." maxlength="10000"></textarea>
+                <div class="actions">
+                    <button id="rwBtn" class="btn-primary">
+                        <span class="btn-text">Переписать</span>
+                        <span class="spinner" style="display:none">Обрабатываю...</span>
+                    </button>
+                </div>
+            </div>
+            <div id="rwResult" style="display:none">
+                <div class="result-card">
+                    <div class="rw-toolbar">
+                        <h3 class="card-title" style="margin:0">Переписанный текст</h3>
+                        <button class="btn-copy" id="copyBtn">Скопировать</button>
+                    </div>
+                    <div id="rwText" class="rw-text"></div>
+                </div>
+                <div class="result-card" id="rwChangesCard" style="display:none">
+                    <h3 class="card-title">Что заменено (<span id="rwCount">0</span> замен)</h3>
+                    <div id="rwChanges"></div>
+                </div>
+            </div>
+            <div id="rwError" class="error-box" style="display:none"></div>
+        </div>
 
-    <script>
-        const textarea = document.getElementById('textInput');
-        const charCount = document.getElementById('charCount');
-        const checkBtn  = document.getElementById('checkBtn');
-        const clearBtn  = document.getElementById('clearBtn');
-        const resultSection = document.getElementById('result');
-        const errorBox  = document.getElementById('errorBox');
+        <!-- TAB: API -->
+        <div id="tab-api" class="tab-content">
+            <div class="result-card">
+                <h3 class="card-title">Публичный API</h3>
+                <p class="api-desc">Отправьте POST-запрос с текстом — получите JSON с результатами анализа.</p>
 
-        textarea.addEventListener('input', () => charCount.textContent = textarea.value.length);
+                <div class="api-block">
+                    <div class="api-label">Endpoint</div>
+                    <div class="api-code">POST https://web-production-ea6bac.up.railway.app/api/check</div>
+                </div>
 
-        clearBtn.addEventListener('click', () => {
-            textarea.value = '';
-            charCount.textContent = '0';
-            resultSection.style.display = 'none';
-            errorBox.style.display = 'none';
-        });
+                <div class="api-block">
+                    <div class="api-label">Запрос (JSON)</div>
+                    <pre class="api-code">{ "text": "Ваш текст для проверки..." }</pre>
+                </div>
 
-        checkBtn.addEventListener('click', async () => {
-            const text = textarea.value.trim();
-            if (!text) return;
-            setLoading(true);
-            resultSection.style.display = 'none';
-            errorBox.style.display = 'none';
-            try {
-                const res  = await fetch('/check', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text})
-                });
-                const data = await res.json();
-                data.error ? showError(data.error) : showResult(data);
-            } catch(e) {
-                showError('Ошибка соединения с сервером');
-            } finally {
-                setLoading(false);
-            }
-        });
+                <div class="api-block">
+                    <div class="api-label">Ответ (JSON)</div>
+                    <pre class="api-code">{
+  "ok": true,
+  "originality": 72,
+  "borrowing": 8,
+  "citation": 5,
+  "ai": 15,
+  "stats": {
+    "chars": 1240,
+    "words": 198,
+    "sentences": 12,
+    "unique_words": 143,
+    "avg_sent_len": 16.5
+  }
+}</pre>
+                </div>
 
-        function setLoading(on) {
-            checkBtn.disabled = on;
-            checkBtn.querySelector('.btn-text').style.display = on ? 'none' : '';
-            checkBtn.querySelector('.spinner').style.display  = on ? 'inline' : 'none';
+                <div class="api-block">
+                    <div class="api-label">Пример на Python</div>
+                    <pre class="api-code">import requests
+
+r = requests.post(
+    "https://web-production-ea6bac.up.railway.app/api/check",
+    json={"text": "Ваш текст здесь..."}
+)
+print(r.json())</pre>
+                </div>
+
+                <div class="api-block">
+                    <div class="api-label">Пример на JavaScript</div>
+                    <pre class="api-code">const res = await fetch(
+  "https://web-production-ea6bac.up.railway.app/api/check",
+  {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ text: "Ваш текст здесь..." })
+  }
+);
+const data = await res.json();
+console.log(data);</pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Люблю Лейлу &bull; Локальный анализ &bull; Без API &bull; Результат носит оценочный характер</p>
+    </footer>
+</div>
+
+<script>
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ── Check ─────────────────────────────────────────────────────────────────────
+const textarea  = document.getElementById('textInput');
+const charCount = document.getElementById('charCount');
+const checkBtn  = document.getElementById('checkBtn');
+const clearBtn  = document.getElementById('clearBtn');
+
+textarea.addEventListener('input', () => charCount.textContent = textarea.value.length);
+
+clearBtn.addEventListener('click', () => {
+    textarea.value = '';
+    charCount.textContent = '0';
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+});
+
+checkBtn.addEventListener('click', async () => {
+    const text = textarea.value.trim();
+    if (!text) return;
+    setLoad(checkBtn, true);
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    try {
+        const res  = await fetch('/check', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
+        const data = await res.json();
+        data.error ? showErr('errorBox', data.error) : showResult(data);
+    } catch(e) { showErr('errorBox', 'Ошибка соединения'); }
+    finally { setLoad(checkBtn, false); }
+});
+
+const CIRC = 2 * Math.PI * 34;
+
+function setRing(id, val, color) {
+    const el = document.getElementById('ring-' + id);
+    el.style.strokeDasharray  = CIRC;
+    el.style.strokeDashoffset = CIRC - (val / 100) * CIRC;
+    el.style.stroke = color;
+    document.getElementById('rval-' + id).textContent = val + '%';
+    document.getElementById('rval-' + id).style.color = color;
+}
+
+function showResult(d) {
+    setRing('orig', d.originality, '#22c55e');
+    setRing('bor',  d.borrowing,   '#f97316');
+    setRing('cit',  d.citation,    '#6366f1');
+    setRing('ai',   d.ai,          '#ef4444');
+
+    document.getElementById('apDate').textContent = new Date().toLocaleDateString('ru-RU');
+
+    const s = d.stats;
+    document.getElementById('statChars').textContent  = s.chars.toLocaleString();
+    document.getElementById('statWords').textContent  = s.words.toLocaleString();
+    document.getElementById('statSents').textContent  = s.sentences;
+    document.getElementById('statUnique').textContent = s.unique_words.toLocaleString();
+    document.getElementById('statAvg').textContent    = s.avg_sent_len;
+
+    renderHighlight(d.sentence_scores);
+    renderDetails(d.details);
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderHighlight(sentences) {
+    const card = document.getElementById('highlightCard');
+    const body = document.getElementById('highlightBody');
+    if (!sentences || !sentences.length) { card.style.display='none'; return; }
+    card.style.display = 'block';
+    body.innerHTML = sentences.map(s => {
+        const sc = s.ai_score;
+        let bg = 'rgba(51,65,85,0.5)';
+        if (sc >= 70) bg = 'rgba(239,68,68,0.18)';
+        else if (sc >= 40) bg = 'rgba(249,115,22,0.15)';
+        const border = sc >= 70 ? '2px solid rgba(239,68,68,0.5)' : sc >= 40 ? '2px solid rgba(249,115,22,0.4)' : '2px solid transparent';
+        return `<span class="hl-sent" style="background:${bg};border-bottom:${border}" title="ИИ-вероятность: ${sc}%">${esc(s.text)} </span>`;
+    }).join('');
+}
+
+function renderDetails(det) {
+    const body = document.getElementById('detailsBody');
+    body.innerHTML = '';
+    let any = false;
+    if (det.ai_phrases?.length)     { any=true; body.innerHTML += section('⚡ Маркеры ИИ', det.ai_phrases, '#ef4444'); }
+    if (det.borrow_phrases?.length) { any=true; body.innerHTML += section('⇄ Маркеры заимствований', det.borrow_phrases, '#f97316'); }
+    if (det.cited_quotes?.length)   { any=true; body.innerHTML += section('❝ Цитаты', det.cited_quotes, '#6366f1'); }
+    if (det.quotes_count || det.refs_count) {
+        any=true;
+        body.innerHTML += `<p class="detail-note">Цитат: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
+    }
+    document.getElementById('detailsCard').style.display = any ? 'block' : 'none';
+}
+
+function section(title, items, color) {
+    const tags = items.map(i => `<span class="tag" style="border-color:${color};color:${color}">«${i}»</span>`).join('');
+    return `<div class="detail-section"><div class="detail-title">${title}</div><div class="tags-wrap">${tags}</div></div>`;
+}
+
+// ── Rewrite ───────────────────────────────────────────────────────────────────
+const rwInput = document.getElementById('rwInput');
+document.getElementById('rwCharCount') && rwInput.addEventListener('input', () => {
+    document.getElementById('rwCharCount').textContent = rwInput.value.length;
+});
+
+document.getElementById('rwBtn').addEventListener('click', async () => {
+    const text = rwInput.value.trim();
+    if (!text) return;
+    setLoad(document.getElementById('rwBtn'), true);
+    document.getElementById('rwResult').style.display = 'none';
+    document.getElementById('rwError').style.display = 'none';
+    try {
+        const res  = await fetch('/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
+        const data = await res.json();
+        if (data.error) { showErr('rwError', data.error); return; }
+
+        document.getElementById('rwText').textContent = data.rewritten;
+        document.getElementById('rwCount').textContent = data.changes.length;
+
+        const ch = document.getElementById('rwChanges');
+        ch.innerHTML = '';
+        if (data.changes.length) {
+            data.changes.forEach(c => {
+                const alts = c.alts.length ? ` <span class="rw-alts">или: ${c.alts.join(', ')}</span>` : '';
+                ch.innerHTML += `<div class="rw-change"><span class="rw-from">«${c.from}»</span> → <span class="rw-to">«${c.to}»</span>${alts}</div>`;
+            });
+            document.getElementById('rwChangesCard').style.display = 'block';
+        } else {
+            document.getElementById('rwChangesCard').style.display = 'none';
         }
+        document.getElementById('rwResult').style.display = 'block';
+    } catch(e) { showErr('rwError', 'Ошибка соединения'); }
+    finally { setLoad(document.getElementById('rwBtn'), false); }
+});
 
-        function showError(msg) {
-            errorBox.textContent = msg;
-            errorBox.style.display = 'block';
-        }
+document.getElementById('copyBtn').addEventListener('click', () => {
+    const t = document.getElementById('rwText').textContent;
+    navigator.clipboard.writeText(t).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Скопировано!';
+        setTimeout(() => btn.textContent = 'Скопировать', 2000);
+    });
+});
 
-        function showResult(d) {
-            setCard('orig', d.originality, '#22c55e');
-            setCard('bor',  d.borrowing,   '#f97316');
-            setCard('cit',  d.citation,    '#6366f1');
-            setCard('ai',   d.ai,          '#ef4444');
-
-            const s = d.stats;
-            document.getElementById('statChars').textContent  = s.chars.toLocaleString();
-            document.getElementById('statWords').textContent  = s.words.toLocaleString();
-            document.getElementById('statSents').textContent  = s.sentences;
-            document.getElementById('statUnique').textContent = s.unique_words.toLocaleString();
-            document.getElementById('statAvg').textContent    = s.avg_sent_len;
-
-            renderHighlight(d.sentence_scores);
-            renderDetails(d.details);
-
-            resultSection.style.display = 'block';
-            resultSection.scrollIntoView({behavior:'smooth', block:'start'});
-        }
-
-        function setCard(id, val, color) {
-            document.getElementById('val-' + id).textContent = val + '%';
-            const bar = document.getElementById('bar-' + id);
-            bar.style.width = val + '%';
-            bar.style.background = color;
-            document.getElementById('val-' + id).style.color = color;
-        }
-
-        function renderDetails(det) {
-            const body = document.getElementById('detailsBody');
-            body.innerHTML = '';
-            let hasAny = false;
-
-            if (det.ai_phrases && det.ai_phrases.length) {
-                hasAny = true;
-                body.innerHTML += section('⚡ Маркеры ИИ', det.ai_phrases, '#ef4444');
-            }
-            if (det.borrow_phrases && det.borrow_phrases.length) {
-                hasAny = true;
-                body.innerHTML += section('⇄ Маркеры заимствований', det.borrow_phrases, '#f97316');
-            }
-            if (det.cited_quotes && det.cited_quotes.length) {
-                hasAny = true;
-                body.innerHTML += section('❝ Цитаты', det.cited_quotes, '#6366f1');
-            }
-            if (det.quotes_count || det.refs_count) {
-                hasAny = true;
-                body.innerHTML += `<p class="detail-note">Цитат в тексте: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
-            }
-
-            document.getElementById('detailsCard').style.display = hasAny ? 'block' : 'none';
-        }
-
-        function renderHighlight(sentences) {
-            const card = document.getElementById('highlightCard');
-            const body = document.getElementById('highlightBody');
-            if (!sentences || !sentences.length) { card.style.display = 'none'; return; }
-            card.style.display = 'block';
-            body.innerHTML = sentences.map(s => {
-                const sc = s.ai_score;
-                let bg = 'transparent', title = 'Оригинальный текст';
-                if (sc >= 70) { bg = 'rgba(239,68,68,0.18)'; title = `ИИ-вероятность: ${sc}%`; }
-                else if (sc >= 40) { bg = 'rgba(249,115,22,0.15)'; title = `ИИ-вероятность: ${sc}%`; }
-                const border = sc >= 70 ? '2px solid rgba(239,68,68,0.5)' : sc >= 40 ? '2px solid rgba(249,115,22,0.4)' : '2px solid transparent';
-                return `<span class="hl-sent" style="background:${bg};border-bottom:${border}" title="${title}">${escHtml(s.text)} </span>`;
-            }).join('');
-        }
-
-        function escHtml(t) {
-            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
-        function section(title, items, color) {
-            const tags = items.map(i => `<span class="tag" style="border-color:${color};color:${color}">«${i}»</span>`).join('');
-            return `<div class="detail-section"><div class="detail-title">${title}</div><div class="tags-wrap">${tags}</div></div>`;
-        }
-    </script>
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function setLoad(btn, on) {
+    btn.disabled = on;
+    btn.querySelector('.btn-text').style.display = on ? 'none' : '';
+    btn.querySelector('.spinner').style.display  = on ? 'inline' : 'none';
+}
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
 </body>
 </html>
