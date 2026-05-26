@@ -281,21 +281,22 @@ def analyze(text: str) -> dict:
 
 
 def rewrite(text: str) -> dict:
-    """Replace AI phrases with human alternatives."""
+    """Replace AI phrases with human alternatives using regex for reliability."""
     result = text
     changes = []
-    lower = text.lower()
 
     for phrase, alts in REWRITES.items():
-        if phrase in lower:
-            idx = lower.find(phrase)
-            original = text[idx: idx + len(phrase)]
-            replacement = alts[0]
-            # Preserve capitalisation
-            if original[0].isupper():
-                replacement = replacement[0].upper() + replacement[1:]
-            result = result[:idx] + replacement + result[idx + len(phrase):]
-            lower = result.lower()
-            changes.append({"from": original, "to": replacement, "alts": alts[1:]})
+        pattern = re.compile(re.escape(phrase), re.IGNORECASE)
+        match = pattern.search(result)
+        if not match:
+            continue
+
+        original = match.group(0)
+        replacement = alts[0]
+        if original[0].isupper():
+            replacement = replacement[0].upper() + replacement[1:]
+
+        result = pattern.sub(replacement, result, count=1)
+        changes.append({"from": original, "to": replacement, "alts": alts[1:]})
 
     return {"rewritten": result, "changes": changes}
