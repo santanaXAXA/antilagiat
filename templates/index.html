@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Люблю Лейлу — Проверка текста</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Люблю Лейлу</h1>
+            <p class="subtitle">Проверка текста на оригинальность, заимствования и ИИ-контент</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="counter"><span id="charCount">0</span> / 10 000 символов</div>
+                <textarea id="textInput"
+                    placeholder="Вставьте текст для проверки (минимум 50 символов)..."
+                    maxlength="10000"></textarea>
+                <div class="actions">
+                    <button id="clearBtn" class="btn-secondary">Очистить</button>
+                    <button id="checkBtn" class="btn-primary">
+                        <span class="btn-text">Проверить</span>
+                        <span class="spinner" style="display:none">Анализирую...</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="result" class="result-section" style="display:none">
+
+                <!-- 4 главных блока -->
+                <div class="four-grid">
+                    <div class="metric-card" id="card-orig">
+                        <div class="mc-icon">✦</div>
+                        <div class="mc-val" id="val-orig">—</div>
+                        <div class="mc-label">Оригинальность</div>
+                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-orig"></div></div>
+                    </div>
+                    <div class="metric-card" id="card-bor">
+                        <div class="mc-icon">⇄</div>
+                        <div class="mc-val" id="val-bor">—</div>
+                        <div class="mc-label">Заимствование</div>
+                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-bor"></div></div>
+                    </div>
+                    <div class="metric-card" id="card-cit">
+                        <div class="mc-icon">❝</div>
+                        <div class="mc-val" id="val-cit">—</div>
+                        <div class="mc-label">Цитирование</div>
+                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-cit"></div></div>
+                    </div>
+                    <div class="metric-card" id="card-ai">
+                        <div class="mc-icon">⚡</div>
+                        <div class="mc-val" id="val-ai">—</div>
+                        <div class="mc-label">ИИ-контент</div>
+                        <div class="mc-bar-bg"><div class="mc-bar" id="bar-ai"></div></div>
+                    </div>
+                </div>
+
+                <!-- Статистика -->
+                <div class="result-card">
+                    <h3 class="card-title">Статистика текста</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-val" id="statChars">—</span>
+                            <span class="stat-label">символов</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statWords">—</span>
+                            <span class="stat-label">слов</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statSents">—</span>
+                            <span class="stat-label">предложений</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statUnique">—</span>
+                            <span class="stat-label">уникальных слов</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="statAvg">—</span>
+                            <span class="stat-label">слов/предложение</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Подсветка текста -->
+                <div class="result-card" id="highlightCard" style="display:none">
+                    <h3 class="card-title">Подсветка ИИ-контента</h3>
+                    <div class="highlight-legend">
+                        <span class="leg-item"><span class="leg-dot" style="background:#ef444488"></span> Высокая вероятность ИИ</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#f97316aa"></span> Средняя вероятность</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:transparent;border:1px solid #334155"></span> Оригинальный текст</span>
+                    </div>
+                    <div id="highlightBody" class="highlight-body"></div>
+                </div>
+
+                <!-- Детали -->
+                <div class="result-card" id="detailsCard">
+                    <h3 class="card-title">Найденные маркеры</h3>
+                    <div id="detailsBody"></div>
+                </div>
+
+            </div>
+
+            <div id="errorBox" class="error-box" style="display:none"></div>
+        </main>
+
+        <footer>
+            <p>Локальный анализ &bull; Без API &bull; Результат носит оценочный характер</p>
+        </footer>
+    </div>
+
+    <script>
+        const textarea = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const checkBtn  = document.getElementById('checkBtn');
+        const clearBtn  = document.getElementById('clearBtn');
+        const resultSection = document.getElementById('result');
+        const errorBox  = document.getElementById('errorBox');
+
+        textarea.addEventListener('input', () => charCount.textContent = textarea.value.length);
+
+        clearBtn.addEventListener('click', () => {
+            textarea.value = '';
+            charCount.textContent = '0';
+            resultSection.style.display = 'none';
+            errorBox.style.display = 'none';
+        });
+
+        checkBtn.addEventListener('click', async () => {
+            const text = textarea.value.trim();
+            if (!text) return;
+            setLoading(true);
+            resultSection.style.display = 'none';
+            errorBox.style.display = 'none';
+            try {
+                const res  = await fetch('/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                const data = await res.json();
+                data.error ? showError(data.error) : showResult(data);
+            } catch(e) {
+                showError('Ошибка соединения с сервером');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(on) {
+            checkBtn.disabled = on;
+            checkBtn.querySelector('.btn-text').style.display = on ? 'none' : '';
+            checkBtn.querySelector('.spinner').style.display  = on ? 'inline' : 'none';
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = 'block';
+        }
+
+        function showResult(d) {
+            setCard('orig', d.originality, '#22c55e');
+            setCard('bor',  d.borrowing,   '#f97316');
+            setCard('cit',  d.citation,    '#6366f1');
+            setCard('ai',   d.ai,          '#ef4444');
+
+            const s = d.stats;
+            document.getElementById('statChars').textContent  = s.chars.toLocaleString();
+            document.getElementById('statWords').textContent  = s.words.toLocaleString();
+            document.getElementById('statSents').textContent  = s.sentences;
+            document.getElementById('statUnique').textContent = s.unique_words.toLocaleString();
+            document.getElementById('statAvg').textContent    = s.avg_sent_len;
+
+            renderHighlight(d.sentence_scores);
+            renderDetails(d.details);
+
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+
+        function setCard(id, val, color) {
+            document.getElementById('val-' + id).textContent = val + '%';
+            const bar = document.getElementById('bar-' + id);
+            bar.style.width = val + '%';
+            bar.style.background = color;
+            document.getElementById('val-' + id).style.color = color;
+        }
+
+        function renderDetails(det) {
+            const body = document.getElementById('detailsBody');
+            body.innerHTML = '';
+            let hasAny = false;
+
+            if (det.ai_phrases && det.ai_phrases.length) {
+                hasAny = true;
+                body.innerHTML += section('⚡ Маркеры ИИ', det.ai_phrases, '#ef4444');
+            }
+            if (det.borrow_phrases && det.borrow_phrases.length) {
+                hasAny = true;
+                body.innerHTML += section('⇄ Маркеры заимствований', det.borrow_phrases, '#f97316');
+            }
+            if (det.cited_quotes && det.cited_quotes.length) {
+                hasAny = true;
+                body.innerHTML += section('❝ Цитаты', det.cited_quotes, '#6366f1');
+            }
+            if (det.quotes_count || det.refs_count) {
+                hasAny = true;
+                body.innerHTML += `<p class="detail-note">Цитат в тексте: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
+            }
+
+            document.getElementById('detailsCard').style.display = hasAny ? 'block' : 'none';
+        }
+
+        function renderHighlight(sentences) {
+            const card = document.getElementById('highlightCard');
+            const body = document.getElementById('highlightBody');
+            if (!sentences || !sentences.length) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            body.innerHTML = sentences.map(s => {
+                const sc = s.ai_score;
+                let bg = 'transparent', title = 'Оригинальный текст';
+                if (sc >= 70) { bg = 'rgba(239,68,68,0.18)'; title = `ИИ-вероятность: ${sc}%`; }
+                else if (sc >= 40) { bg = 'rgba(249,115,22,0.15)'; title = `ИИ-вероятность: ${sc}%`; }
+                const border = sc >= 70 ? '2px solid rgba(239,68,68,0.5)' : sc >= 40 ? '2px solid rgba(249,115,22,0.4)' : '2px solid transparent';
+                return `<span class="hl-sent" style="background:${bg};border-bottom:${border}" title="${title}">${escHtml(s.text)} </span>`;
+            }).join('');
+        }
+
+        function escHtml(t) {
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function section(title, items, color) {
+            const tags = items.map(i => `<span class="tag" style="border-color:${color};color:${color}">«${i}»</span>`).join('');
+            return `<div class="detail-section"><div class="detail-title">${title}</div><div class="tags-wrap">${tags}</div></div>`;
+        }
+    </script>
+</body>
+</html>
