@@ -110,6 +110,13 @@
                     <div id="highlightBody" class="highlight-body"></div>
                 </div>
 
+                <!-- Источники совпадений -->
+                <div class="result-card" id="sourcesCard" style="display:none">
+                    <h3 class="card-title">Найденные источники</h3>
+                    <div id="dbInfo" class="db-info" style="display:none"></div>
+                    <div id="sourcesList"></div>
+                </div>
+
                 <!-- Маркеры -->
                 <div class="result-card" id="detailsCard" style="display:none">
                     <h3 class="card-title">Найденные маркеры</h3>
@@ -283,6 +290,7 @@ function showResult(d) {
 
     renderHighlight(d.sentence_scores);
     renderDetails(d.details);
+    renderSources(d.sources || [], d.db || {});
 
     document.getElementById('result').style.display = 'block';
     document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
@@ -315,6 +323,41 @@ function renderDetails(det) {
         body.innerHTML += `<p class="detail-note">Цитат: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
     }
     document.getElementById('detailsCard').style.display = any ? 'block' : 'none';
+}
+
+function renderSources(sources, db) {
+    const card = document.getElementById('sourcesCard');
+    const list = document.getElementById('sourcesList');
+    const dbInfo = document.getElementById('dbInfo');
+    list.innerHTML = '';
+
+    if (db && db.total_docs > 0) {
+        dbInfo.style.display = 'block';
+        dbInfo.innerHTML = `📂 База текстов: <b>${db.total_docs}</b> документов. ` +
+            (db.score > 10
+                ? `Совпадение с ранее загруженными: <b style="color:#ef4444">${db.score}%</b>`
+                : `Совпадений с базой не найдено.`);
+    }
+
+    if (!sources || !sources.length) {
+        if (db && db.total_docs > 0) { card.style.display = 'block'; }
+        else { card.style.display = 'none'; }
+        return;
+    }
+
+    card.style.display = 'block';
+    sources.forEach(s => {
+        const icon = s.source === 'Wikipedia' ? '📖' : '🌐';
+        list.innerHTML += `
+        <div class="source-row">
+            <div class="source-header">
+                <span class="source-icon">${icon} ${s.source}</span>
+                <span class="source-overlap" style="color:#f97316">${s.overlap}% совпадение</span>
+            </div>
+            <div class="source-sent">«${esc(s.sentence)}»</div>
+            <a class="source-link" href="${s.url}" target="_blank">${esc(s.title)}</a>
+        </div>`;
+    });
 }
 
 function section(title, items, color) {
