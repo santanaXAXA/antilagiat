@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from analyzer import analyze, rewrite
-from bot import start_bot_thread
 
 app = Flask(__name__)
-start_bot_thread()
 
 
 @app.route("/")
