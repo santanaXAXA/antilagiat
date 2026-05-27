@@ -87,6 +87,12 @@
                     </div>
                 </div>
 
+                <!-- Вердикт -->
+                <div class="result-card" id="verdictCard">
+                    <h3 class="card-title">Вердикт</h3>
+                    <div id="verdictBody" class="verdict-body"></div>
+                </div>
+
                 <!-- Статистика -->
                 <div class="result-card">
                     <h3 class="card-title">Статистика текста</h3>
@@ -288,6 +294,7 @@ function showResult(d) {
     document.getElementById('statUnique').textContent = s.unique_words.toLocaleString();
     document.getElementById('statAvg').textContent    = s.avg_sent_len;
 
+    renderVerdict(d);
     renderHighlight(d.sentence_scores);
     renderDetails(d.details);
     renderSources(d.sources || [], d.db || {});
@@ -323,6 +330,68 @@ function renderDetails(det) {
         body.innerHTML += `<p class="detail-note">Цитат: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
     }
     document.getElementById('detailsCard').style.display = any ? 'block' : 'none';
+}
+
+function renderVerdict(d) {
+    const body = document.getElementById('verdictBody');
+    const det  = d.details || {};
+    const st   = d.stats   || {};
+    const rows = [];
+
+    // Оригинальность
+    let origText;
+    if (d.originality >= 70)
+        origText = `высокая — большая часть текста является авторской и не совпадает с найденными источниками`;
+    else if (d.originality >= 40)
+        origText = `средняя — часть текста оригинальна, но присутствуют заимствования и шаблонные конструкции`;
+    else
+        origText = `низкая — большая часть текста совпадает с другими источниками, заимствованиями или ИИ-генерацией`;
+    rows.push({label:'Оригинальность', val: d.originality, color:'#22c55e', text: origText});
+
+    // Заимствование
+    let borText;
+    const borPhrases = (det.borrow_phrases || []).slice(0,2).map(p=>`«${p}»`).join(', ');
+    if (d.borrowing >= 40)
+        borText = `высокое — обнаружены характерные маркеры заимствований${borPhrases ? ': ' + borPhrases : ''}, пассивные конструкции и длинные академические предложения`;
+    else if (d.borrowing >= 15)
+        borText = `умеренное — присутствуют отдельные признаки заимствований${borPhrases ? ' (' + borPhrases + ')' : ''}`;
+    else
+        borText = `низкое — явных признаков заимствований не обнаружено`;
+    rows.push({label:'Заимствование', val: d.borrowing, color:'#f97316', text: borText});
+
+    // Цитирование
+    let citText;
+    const qc = det.quotes_count || 0;
+    const rc = det.refs_count   || 0;
+    if (d.citation >= 30)
+        citText = `значительное — найдено ${qc} цитат в кавычках и ${rc} ссылок/сносок, что говорит об активном использовании источников`;
+    else if (d.citation >= 10)
+        citText = `умеренное — текст содержит ${qc > 0 ? qc + ' цитаты' : 'отдельные ссылки на источники'}`;
+    else
+        citText = `минимальное — цитат и ссылок на источники практически нет`;
+    rows.push({label:'Цитирование', val: d.citation, color:'#6366f1', text: citText});
+
+    // ИИ-контент
+    let aiText;
+    const aiPhrases = (det.ai_phrases || []).slice(0,2).map(p=>`«${p}»`).join(', ');
+    const avgLen = st.avg_sent_len || 0;
+    if (d.ai >= 60)
+        aiText = `высокий — текст демонстрирует явные признаки генерации ИИ: однородная длина предложений (~${avgLen} слов)${aiPhrases ? ', шаблонные обороты: ' + aiPhrases : ''}, отсутствие живой пунктуации`;
+    else if (d.ai >= 30)
+        aiText = `средний — часть текста написана в стиле ИИ${aiPhrases ? ', найдены характерные фразы: ' + aiPhrases : ''}. Возможно смешанное авторство`;
+    else
+        aiText = `низкий — текст написан в живом авторском стиле, признаки ИИ-генерации минимальны`;
+    rows.push({label:'ИИ-контент', val: d.ai, color:'#ef4444', text: aiText});
+
+    body.innerHTML = rows.map(r => `
+        <div class="verdict-row">
+            <div class="verdict-label">
+                <span class="verdict-dot" style="background:${r.color}"></span>
+                <b style="color:${r.color}">${r.label} — ${r.val}%</b>
+            </div>
+            <div class="verdict-text">${r.text}.</div>
+        </div>
+    `).join('');
 }
 
 function renderSources(sources, db) {
