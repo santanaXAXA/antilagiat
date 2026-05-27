@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Люблю Лейлу — Вход</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { align-items: center; }
+        .auth-wrap { width: 100%; max-width: 420px; }
+        .auth-logo { text-align: center; margin-bottom: 32px; }
+        .auth-logo h1 { font-size: 2rem; }
+        .auth-logo p  { color: #64748b; font-size: 0.88rem; margin-top: 6px; }
+
+        .auth-card {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 20px; padding: 32px;
+        }
+        .auth-tabs { display: flex; gap: 4px; margin-bottom: 28px; background: #0f172a; border-radius: 10px; padding: 4px; }
+        .auth-tab {
+            flex: 1; padding: 8px; border: none; border-radius: 7px; cursor: pointer;
+            font-size: 0.88rem; font-weight: 600; color: #64748b; background: transparent; transition: all 0.2s;
+        }
+        .auth-tab.active { background: #334155; color: #e2e8f0; }
+
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.03em; }
+        .field input {
+            width: 100%; background: #0f172a; border: 1px solid #334155;
+            border-radius: 8px; padding: 11px 14px; color: #e2e8f0;
+            font-size: 0.93rem; outline: none; transition: border-color 0.2s;
+        }
+        .field input:focus { border-color: #6366f1; }
+        .field input::placeholder { color: #475569; }
+
+        .auth-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 0.95rem; font-weight: 700; margin-top: 8px;
+            background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .auth-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .auth-error {
+            background: #3b1818; border: 1px solid #7f1d1d;
+            border-radius: 8px; padding: 10px 14px;
+            color: #fca5a5; font-size: 0.85rem; margin-bottom: 16px;
+        }
+        .auth-footer { text-align: center; margin-top: 24px; color: #475569; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-logo">
+        <h1>Люблю Лейлу</h1>
+        <p>Проверка текста на оригинальность и ИИ-контент</p>
+    </div>
+
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="auth-tab {% if mode == 'login' %}active{% endif %}" id="tab-login">Войти</button>
+            <button class="auth-tab {% if mode == 'register' %}active{% endif %}" id="tab-reg">Регистрация</button>
+        </div>
+
+        {% if error %}
+        <div class="auth-error">{{ error }}</div>
+        {% endif %}
+
+        <!-- Login -->
+        <form class="auth-form {% if mode == 'login' %}active{% endif %}" id="form-login" method="POST" action="/login">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="you@example.com" required autofocus>
+            </div>
+            <div class="field">
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn">Войти</button>
+        </form>
+
+        <!-- Register -->
+        <form class="auth-form {% if mode == 'register' %}active{% endif %}" id="form-reg" method="POST" action="/register">
+            <div class="field">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" placeholder="Ivan Petrov" required maxlength="40">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="Минимум 6 символов" required minlength="6">
+            </div>
+            <div class="field">
+                <label>Повторите пароль</label>
+                <input type="password" name="confirm" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn">Создать аккаунт</button>
+        </form>
+    </div>
+
+    <div class="auth-footer">Люблю Лейлу &bull; Без API &bull; Локальный анализ</div>
+</div>
+
+<script>
+const tabs = document.querySelectorAll('.auth-tab');
+const forms = document.querySelectorAll('.auth-form');
+tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        forms.forEach(f => f.classList.remove('active'));
+        tab.classList.add('active');
+        forms[i].classList.add('active');
+    });
+});
+</script>
+</body>
+</html>

@@ -21,6 +21,16 @@ h1 {
 }
 .subtitle { margin-top: 8px; color: #94a3b8; font-size: 0.95rem; }
 
+/* User bar */
+.user-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
+.user-name { font-size: 0.85rem; color: #64748b; }
+.btn-logout {
+    font-size: 0.8rem; padding: 5px 14px; border-radius: 6px;
+    background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+    text-decoration: none; transition: background 0.2s;
+}
+.btn-logout:hover { background: #334155; color: #e2e8f0; }
+
 /* Tabs */
 .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #1e293b; border-radius: 12px; padding: 5px; border: 1px solid #334155; }
 .tab {

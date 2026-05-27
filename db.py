@@ -14,8 +14,48 @@ def init_db():
         text_hash TEXT UNIQUE,
         shingles  TEXT
     )""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS users (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        username      TEXT UNIQUE NOT NULL,
+        email         TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created       TEXT DEFAULT (datetime('now'))
+    )""")
     conn.commit()
     conn.close()
+
+
+def create_user(username: str, email: str, password_hash: str):
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute(
+            "INSERT INTO users (username, email, password_hash) VALUES (?,?,?)",
+            (username.strip(), email.strip().lower(), password_hash),
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def get_user_by_email(email: str):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        "SELECT * FROM users WHERE email=?", (email.strip().lower(),)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def get_user_by_id(user_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def _shingles(text: str, n: int = 5) -> set:

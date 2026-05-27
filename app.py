@@ -1,17 +1,83 @@
-from flask import Flask, render_template, request, jsonify
+import functools
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from analyzer import analyze, rewrite, split_sentences
-from db import store, compare
+from db import store, compare, create_user, get_user_by_email, get_user_by_id
 from web_check import check_wikipedia, check_google
 
 app = Flask(__name__)
+app.secret_key = "ll-secret-key-2026-change-in-prod"
+
+
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("user_id"):
+            if request.is_json:
+                return jsonify({"error": "Требуется авторизация"}), 401
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
 
 
 @app.route("/")
+@login_required
 def index():
-    return render_template("index.html")
+    user = get_user_by_id(session["user_id"])
+    return render_template("index.html", username=user["username"])
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("user_id"):
+        return redirect(url_for("index"))
+    error = None
+    if request.method == "POST":
+        email    = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        user = get_user_by_email(email)
+        if user and check_password_hash(user["password_hash"], password):
+            session["user_id"] = user["id"]
+            return redirect(url_for("index"))
+        error = "Неверный email или пароль"
+    return render_template("login.html", error=error, mode="login")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if session.get("user_id"):
+        return redirect(url_for("index"))
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email    = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        confirm  = request.form.get("confirm", "")
+
+        if not username or not email or not password:
+            error = "Заполните все поля"
+        elif len(password) < 6:
+            error = "Пароль минимум 6 символов"
+        elif password != confirm:
+            error = "Пароли не совпадают"
+        else:
+            ok = create_user(username, email, generate_password_hash(password))
+            if ok:
+                user = get_user_by_email(email)
+                session["user_id"] = user["id"]
+                return redirect(url_for("index"))
+            error = "Такой email или имя уже зарегистрированы"
+    return render_template("login.html", error=error, mode="register")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 @app.route("/check", methods=["POST"])
+@login_required
 def check():
     data = request.get_json()
     text = data.get("text", "").strip()
@@ -26,16 +92,13 @@ def check():
     result = analyze(text)
     sentences = split_sentences(text)
 
-    # Local DB comparison
     db_result = compare(text)
     store(text)
 
-    # Wikipedia + Google
     wiki_matches   = check_wikipedia(sentences)
     google_matches = check_google(sentences)
     all_sources    = wiki_matches + google_matches
 
-    # Boost borrowing score if sources found
     source_boost = min(40, len(all_sources) * 12)
     new_bor = min(100, result["borrowing"] + source_boost + db_result["score"] // 3)
     diff    = new_bor - result["borrowing"]
@@ -49,6 +112,7 @@ def check():
 
 
 @app.route("/rewrite", methods=["POST"])
+@login_required
 def rewrite_text():
     data = request.get_json()
     text = data.get("text", "").strip()
