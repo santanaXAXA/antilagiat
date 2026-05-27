@@ -13,29 +13,44 @@
         <p class="subtitle">Проверка текста на оригинальность, заимствования и ИИ-контент</p>
         <div class="user-bar">
             <span class="user-name">👤 {{ username }}</span>
+            <a href="/profile" class="btn-nav">Профиль</a>
+            {% if is_admin %}<a href="/admin" class="btn-nav btn-admin">⚙ Админ</a>{% endif %}
             <a href="/logout" class="btn-logout">Выйти</a>
         </div>
     </header>
 
     <main>
-        <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" data-tab="check">Проверить</button>
-            <button class="tab" data-tab="rewrite">Переписать под человека</button>
+            <button class="tab" data-tab="rewrite">Переписать</button>
+            <button class="tab" data-tab="compare">Сравнить</button>
+            <button class="tab" data-tab="history">История</button>
             <button class="tab" data-tab="api">API</button>
         </div>
 
-        <!-- TAB: CHECK -->
+        <!-- ── TAB: CHECK ── -->
         <div id="tab-check" class="tab-content active">
             <div class="input-section">
-                <div class="counter"><span id="charCount">0</span> / 10 000 символов</div>
+                <div class="counter-row">
+                    <div class="counter"><span id="charCount">0</span> / 10 000 символов</div>
+                    <label class="upload-label" for="fileInput">📎 Загрузить файл</label>
+                    <input type="file" id="fileInput" accept=".txt,.docx" style="display:none">
+                </div>
+                <div id="fileTag" class="file-tag" style="display:none"></div>
                 <textarea id="textInput" placeholder="Вставьте текст для проверки (минимум 50 символов)..." maxlength="10000"></textarea>
-                <div class="actions">
-                    <button id="clearBtn" class="btn-secondary">Очистить</button>
-                    <button id="checkBtn" class="btn-primary">
-                        <span class="btn-text">Проверить</span>
-                        <span class="spinner" style="display:none">Анализирую...</span>
-                    </button>
+                <div id="progressWrap" class="progress-wrap" style="display:none">
+                    <div class="progress-bar-track"><div id="progressFill" class="progress-fill"></div></div>
+                    <span class="progress-label">Анализирую текст...</span>
+                </div>
+                <div class="actions-row">
+                    <div id="quotaInfo" class="quota-info"></div>
+                    <div class="actions">
+                        <button id="clearBtn" class="btn-secondary">Очистить</button>
+                        <button id="checkBtn" class="btn-primary">
+                            <span class="btn-text">Проверить</span>
+                            <span class="spinner" style="display:none">Анализирую...</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -48,42 +63,30 @@
                         <span class="ap-date" id="apDate"></span>
                     </div>
                     <div class="ap-grid">
-                        <div class="ap-block" id="ap-orig">
+                        <div class="ap-block">
                             <div class="ap-ring-wrap">
-                                <svg viewBox="0 0 80 80">
-                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
-                                    <circle class="ap-prog" id="ring-orig" cx="40" cy="40" r="34"/>
-                                </svg>
+                                <svg viewBox="0 0 80 80"><circle class="ap-track" cx="40" cy="40" r="34"/><circle class="ap-prog" id="ring-orig" cx="40" cy="40" r="34"/></svg>
                                 <span class="ap-ring-val" id="rval-orig">—</span>
                             </div>
                             <div class="ap-block-label">Оригинальность</div>
                         </div>
-                        <div class="ap-block" id="ap-bor">
+                        <div class="ap-block">
                             <div class="ap-ring-wrap">
-                                <svg viewBox="0 0 80 80">
-                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
-                                    <circle class="ap-prog" id="ring-bor" cx="40" cy="40" r="34"/>
-                                </svg>
+                                <svg viewBox="0 0 80 80"><circle class="ap-track" cx="40" cy="40" r="34"/><circle class="ap-prog" id="ring-bor" cx="40" cy="40" r="34"/></svg>
                                 <span class="ap-ring-val" id="rval-bor">—</span>
                             </div>
                             <div class="ap-block-label">Заимствование</div>
                         </div>
-                        <div class="ap-block" id="ap-cit">
+                        <div class="ap-block">
                             <div class="ap-ring-wrap">
-                                <svg viewBox="0 0 80 80">
-                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
-                                    <circle class="ap-prog" id="ring-cit" cx="40" cy="40" r="34"/>
-                                </svg>
+                                <svg viewBox="0 0 80 80"><circle class="ap-track" cx="40" cy="40" r="34"/><circle class="ap-prog" id="ring-cit" cx="40" cy="40" r="34"/></svg>
                                 <span class="ap-ring-val" id="rval-cit">—</span>
                             </div>
                             <div class="ap-block-label">Цитирование</div>
                         </div>
-                        <div class="ap-block" id="ap-ai">
+                        <div class="ap-block">
                             <div class="ap-ring-wrap">
-                                <svg viewBox="0 0 80 80">
-                                    <circle class="ap-track" cx="40" cy="40" r="34"/>
-                                    <circle class="ap-prog" id="ring-ai" cx="40" cy="40" r="34"/>
-                                </svg>
+                                <svg viewBox="0 0 80 80"><circle class="ap-track" cx="40" cy="40" r="34"/><circle class="ap-prog" id="ring-ai" cx="40" cy="40" r="34"/></svg>
                                 <span class="ap-ring-val" id="rval-ai">—</span>
                             </div>
                             <div class="ap-block-label">ИИ-контент</div>
@@ -99,6 +102,11 @@
                         <div class="summary-text" id="summaryText"></div>
                         <div class="summary-rec" id="summaryRec"></div>
                     </div>
+                </div>
+
+                <!-- Экспорт -->
+                <div style="text-align:right; margin-bottom:12px;">
+                    <button id="exportBtn" class="btn-export">⬇ Скачать отчёт</button>
                 </div>
 
                 <!-- Вердикт -->
@@ -130,7 +138,7 @@
                     <div id="highlightBody" class="highlight-body"></div>
                 </div>
 
-                <!-- Источники совпадений -->
+                <!-- Источники -->
                 <div class="result-card" id="sourcesCard" style="display:none">
                     <h3 class="card-title">Найденные источники</h3>
                     <div id="dbInfo" class="db-info" style="display:none"></div>
@@ -147,7 +155,7 @@
             <div id="errorBox" class="error-box" style="display:none"></div>
         </div>
 
-        <!-- TAB: REWRITE -->
+        <!-- ── TAB: REWRITE ── -->
         <div id="tab-rewrite" class="tab-content">
             <div class="input-section">
                 <div class="counter"><span id="rwCharCount">0</span> / 10 000 символов</div>
@@ -175,22 +183,59 @@
             <div id="rwError" class="error-box" style="display:none"></div>
         </div>
 
-        <!-- TAB: API -->
+        <!-- ── TAB: COMPARE ── -->
+        <div id="tab-compare" class="tab-content">
+            <div class="compare-grid">
+                <div class="input-section">
+                    <div class="counter"><span id="cmp1Count">0</span> / 5 000 символов</div>
+                    <textarea id="cmpText1" placeholder="Первый текст..." maxlength="5000" style="min-height:180px"></textarea>
+                </div>
+                <div class="input-section">
+                    <div class="counter"><span id="cmp2Count">0</span> / 5 000 символов</div>
+                    <textarea id="cmpText2" placeholder="Второй текст..." maxlength="5000" style="min-height:180px"></textarea>
+                </div>
+            </div>
+            <div class="actions" style="justify-content:flex-end; margin-bottom:16px;">
+                <button id="cmpBtn" class="btn-primary">
+                    <span class="btn-text">Сравнить тексты</span>
+                    <span class="spinner" style="display:none">Сравниваю...</span>
+                </button>
+            </div>
+            <div id="cmpResult" style="display:none">
+                <div class="result-card cmp-card">
+                    <div class="cmp-percent-wrap">
+                        <div class="cmp-percent" id="cmpPercent"></div>
+                        <div class="cmp-label">совпадение</div>
+                    </div>
+                    <div class="cmp-details">
+                        <div class="cmp-verdict" id="cmpVerdict"></div>
+                        <div class="cmp-stats" id="cmpStats"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="cmpError" class="error-box" style="display:none"></div>
+        </div>
+
+        <!-- ── TAB: HISTORY ── -->
+        <div id="tab-history" class="tab-content">
+            <div id="historyContent">
+                <div class="history-placeholder">Откройте вкладку, чтобы загрузить историю проверок</div>
+            </div>
+        </div>
+
+        <!-- ── TAB: API ── -->
         <div id="tab-api" class="tab-content">
             <div class="result-card">
                 <h3 class="card-title">Публичный API</h3>
                 <p class="api-desc">Отправьте POST-запрос с текстом — получите JSON с результатами анализа.</p>
-
                 <div class="api-block">
                     <div class="api-label">Endpoint</div>
                     <div class="api-code">POST https://web-production-ea6bac.up.railway.app/api/check</div>
                 </div>
-
                 <div class="api-block">
                     <div class="api-label">Запрос (JSON)</div>
                     <pre class="api-code">{ "text": "Ваш текст для проверки..." }</pre>
                 </div>
-
                 <div class="api-block">
                     <div class="api-label">Ответ (JSON)</div>
                     <pre class="api-code">{
@@ -199,39 +244,17 @@
   "borrowing": 8,
   "citation": 5,
   "ai": 15,
-  "stats": {
-    "chars": 1240,
-    "words": 198,
-    "sentences": 12,
-    "unique_words": 143,
-    "avg_sent_len": 16.5
-  }
+  "stats": { "chars": 1240, "words": 198, "sentences": 12 }
 }</pre>
                 </div>
-
                 <div class="api-block">
                     <div class="api-label">Пример на Python</div>
                     <pre class="api-code">import requests
-
 r = requests.post(
     "https://web-production-ea6bac.up.railway.app/api/check",
     json={"text": "Ваш текст здесь..."}
 )
 print(r.json())</pre>
-                </div>
-
-                <div class="api-block">
-                    <div class="api-label">Пример на JavaScript</div>
-                    <pre class="api-code">const res = await fetch(
-  "https://web-production-ea6bac.up.railway.app/api/check",
-  {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ text: "Ваш текст здесь..." })
-  }
-);
-const data = await res.json();
-console.log(data);</pre>
                 </div>
             </div>
         </div>
@@ -243,17 +266,20 @@ console.log(data);</pre>
 </div>
 
 <script>
-// ── Tabs ──────────────────────────────────────────────────────────────────────
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+let historyLoaded = false;
+
 document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'history' && !historyLoaded) loadHistory();
     });
 });
 
-// ── Check ─────────────────────────────────────────────────────────────────────
+// ── Check ──────────────────────────────────────────────────────────────────────
 const textarea  = document.getElementById('textInput');
 const charCount = document.getElementById('charCount');
 const checkBtn  = document.getElementById('checkBtn');
@@ -266,22 +292,135 @@ clearBtn.addEventListener('click', () => {
     charCount.textContent = '0';
     document.getElementById('result').style.display = 'none';
     document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('fileTag').style.display = 'none';
+    document.getElementById('fileInput').value = '';
 });
+
+let lastResult = null;
 
 checkBtn.addEventListener('click', async () => {
     const text = textarea.value.trim();
     if (!text) return;
     setLoad(checkBtn, true);
+    startProgress();
     document.getElementById('result').style.display = 'none';
     document.getElementById('errorBox').style.display = 'none';
     try {
         const res  = await fetch('/check', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
         const data = await res.json();
-        data.error ? showErr('errorBox', data.error) : showResult(data);
-    } catch(e) { showErr('errorBox', 'Ошибка соединения'); }
+        finishProgress();
+        if (data.error) { showErr('errorBox', data.error); }
+        else { lastResult = data; showResult(data); loadQuota(); }
+    } catch(e) { finishProgress(); showErr('errorBox', 'Ошибка соединения'); }
     finally { setLoad(checkBtn, false); }
 });
 
+// ── Progress bar ───────────────────────────────────────────────────────────────
+function startProgress() {
+    const wrap = document.getElementById('progressWrap');
+    const fill = document.getElementById('progressFill');
+    wrap.style.display = 'block';
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    setTimeout(() => {
+        fill.style.transition = 'width 3.5s ease-out';
+        fill.style.width = '82%';
+    }, 30);
+}
+
+function finishProgress() {
+    const fill = document.getElementById('progressFill');
+    fill.style.transition = 'width 0.25s ease';
+    fill.style.width = '100%';
+    setTimeout(() => {
+        document.getElementById('progressWrap').style.display = 'none';
+        fill.style.width = '0%';
+    }, 400);
+}
+
+// ── Quota ──────────────────────────────────────────────────────────────────────
+async function loadQuota() {
+    try {
+        const res = await fetch('/api/quota');
+        const d   = await res.json();
+        const el  = document.getElementById('quotaInfo');
+        if (d.is_admin) {
+            el.innerHTML = '<span style="color:#6366f1">👑 Без лимита (admin)</span>';
+        } else {
+            const left  = d.limit - d.used;
+            const color = left <= 2 ? '#ef4444' : left <= 5 ? '#f97316' : '#64748b';
+            el.innerHTML = `<span style="color:${color}">Проверок сегодня: ${d.used} / ${d.limit}</span>`;
+        }
+    } catch(e) {}
+}
+loadQuota();
+
+// ── File upload ────────────────────────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const tag = document.getElementById('fileTag');
+    tag.textContent = '📄 ' + file.name;
+    tag.style.display = 'block';
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.txt')) {
+        const text = await file.text();
+        textarea.value = text.slice(0, 10000);
+        charCount.textContent = textarea.value.length;
+    } else if (name.endsWith('.docx')) {
+        const form = new FormData();
+        form.append('file', file);
+        try {
+            const res = await fetch('/upload', { method:'POST', body: form });
+            const d   = await res.json();
+            if (d.error) { showErr('errorBox', d.error); return; }
+            textarea.value = d.text;
+            charCount.textContent = d.text.length;
+        } catch(e) { showErr('errorBox', 'Ошибка загрузки файла'); }
+    }
+});
+
+// ── Export ─────────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!lastResult) return;
+    const d = lastResult;
+    const lines = [
+        'ЛЮБЛЮ ЛЕЙЛУ — Результат проверки',
+        '='.repeat(40),
+        'Дата: ' + new Date().toLocaleString('ru-RU'),
+        '',
+        'ОСНОВНЫЕ ПОКАЗАТЕЛИ:',
+        '  Оригинальность : ' + d.originality + '%',
+        '  Заимствование  : ' + d.borrowing   + '%',
+        '  Цитирование    : ' + d.citation     + '%',
+        '  ИИ-контент     : ' + d.ai           + '%',
+        '',
+        'СТАТИСТИКА ТЕКСТА:',
+        '  Символов           : ' + d.stats.chars,
+        '  Слов               : ' + d.stats.words,
+        '  Предложений        : ' + d.stats.sentences,
+        '  Уникальных слов    : ' + d.stats.unique_words,
+        '  Слов/предложение   : ' + d.stats.avg_sent_len,
+    ];
+    if (d.sources && d.sources.length) {
+        lines.push('', 'НАЙДЕННЫЕ ИСТОЧНИКИ:');
+        d.sources.forEach(s => {
+            lines.push('  [' + s.source + '] ' + s.title + ' — ' + s.overlap + '% совпадение');
+            lines.push('  URL: ' + s.url);
+        });
+    }
+    if (d.details) {
+        if (d.details.ai_phrases?.length)     lines.push('', 'МАРКЕРЫ ИИ: ' + d.details.ai_phrases.join(', '));
+        if (d.details.borrow_phrases?.length) lines.push('МАРКЕРЫ ЗАИМСТВОВАНИЙ: ' + d.details.borrow_phrases.join(', '));
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'report.txt'; a.click();
+    URL.revokeObjectURL(url);
+});
+
+// ── Rings ──────────────────────────────────────────────────────────────────────
 const CIRC = 2 * Math.PI * 34;
 
 function setRing(id, val, color) {
@@ -298,7 +437,6 @@ function showResult(d) {
     setRing('bor',  d.borrowing,   '#f97316');
     setRing('cit',  d.citation,    '#6366f1');
     setRing('ai',   d.ai,          '#ef4444');
-
     document.getElementById('apDate').textContent = new Date().toLocaleDateString('ru-RU');
 
     const s = d.stats;
@@ -318,81 +456,112 @@ function showResult(d) {
     document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+// ── Summary ────────────────────────────────────────────────────────────────────
 function renderSummary(d) {
     const orig = d.originality, bor = d.borrowing, ai = d.ai, cit = d.citation;
     const sources = (d.sources || []).length;
     const st = d.stats || {};
-
     let icon, titleText, titleColor, borderColor, bgColor, text, rec;
 
     if (orig >= 70 && bor <= 20 && ai <= 25) {
-        // Полностью оригинален
         icon = '✅'; titleColor = '#22c55e'; borderColor = '#22c55e33'; bgColor = '#0d2318';
         titleText = 'Текст полностью оригинален';
-        text = `Анализ не выявил значимых признаков заимствований из внешних источников или ИИ-генерации. `
+        text = `Анализ не выявил значимых признаков заимствований или ИИ-генерации. `
              + `Словарный запас разнообразен (${st.unique_words || '—'} уникальных слов из ${st.words || '—'}), `
-             + `длина предложений варьируется естественным образом, характерные шаблонные обороты отсутствуют. `
-             + (sources > 0
-                ? `Несмотря на совпадение отдельных фраз с открытыми источниками (${sources} шт.), общий контент остаётся авторским.`
-                : `Совпадений с известными источниками обнаружено не было.`);
-        rec = '💡 Рекомендация: текст готов к публикации или сдаче — он с высокой вероятностью пройдёт проверку антиплагиат-систем.';
-
+             + `длина предложений варьируется естественным образом. `
+             + (sources > 0 ? `Несмотря на совпадение отдельных фраз с открытыми источниками (${sources} шт.), общий контент остаётся авторским.`
+                            : `Совпадений с известными источниками обнаружено не было.`);
+        rec = '💡 Рекомендация: текст готов к публикации — он с высокой вероятностью пройдёт проверку антиплагиат-систем.';
     } else if (orig >= 50 && bor <= 35 && ai <= 45) {
-        // Преимущественно оригинален
         icon = '🟡'; titleColor = '#eab308'; borderColor = '#eab30833'; bgColor = '#1a1800';
         titleText = 'Текст преимущественно оригинален';
-        text = `Большая часть содержимого является авторской, однако анализ зафиксировал отдельные признаки заимствований `
-             + `(${bor}%) и элементы ИИ-стиля (${ai}%). `
-             + (d.details?.borrow_phrases?.length
-                ? `Обнаружены характерные академические обороты: «${d.details.borrow_phrases.slice(0,2).join('», «')}». `
-                : '')
-             + `Структура и лексика в целом соответствуют живому тексту, но отдельные фрагменты могут быть восприняты системами как нетипичные для человека.`;
-        rec = '💡 Рекомендация: используйте вкладку «Переписать под человека», чтобы заменить шаблонные обороты и улучшить показатель оригинальности.';
-
+        text = `Большая часть содержимого является авторской, однако зафиксированы отдельные признаки заимствований (${bor}%) и элементы ИИ-стиля (${ai}%). `
+             + (d.details?.borrow_phrases?.length ? `Найдены характерные обороты: «${d.details.borrow_phrases.slice(0,2).join('», «')}». ` : '')
+             + `Структура и лексика в целом соответствуют живому тексту, но отдельные фрагменты могут восприниматься системами как нетипичные.`;
+        rec = '💡 Рекомендация: используйте вкладку «Переписать», чтобы заменить шаблонные обороты и улучшить оригинальность.';
     } else if (ai >= 60 && bor < 40) {
-        // Написан ИИ
         icon = '🤖'; titleColor = '#ef4444'; borderColor = '#ef444433'; bgColor = '#1e0b0b';
         titleText = 'Текст написан с помощью ИИ';
         text = `Анализ с высокой степенью уверенности определил текст как сгенерированный ИИ-системой. `
              + `Признаки: однородная длина предложений (~${st.avg_sent_len} слов), `
-             + (d.details?.ai_phrases?.length ? `типичные ИИ-обороты («${d.details.ai_phrases.slice(0,3).join('», «')}»), ` : '')
-             + `низкий уровень «пульсации» (burstiness) текста и высокая предсказуемость лексических переходов. `
-             + `Оригинальность составляет лишь ${orig}%, что критически мало для самостоятельной работы.`;
-        rec = '💡 Рекомендация: переработайте текст вручную или воспользуйтесь функцией «Переписать под человека» для снижения ИИ-показателя.';
-
+             + (d.details?.ai_phrases?.length ? `шаблонные обороты («${d.details.ai_phrases.slice(0,3).join('», «')}»), ` : '')
+             + `низкая «пульсация» (burstiness) и высокая предсказуемость переходов. `
+             + `Оригинальность составляет лишь ${orig}%.`;
+        rec = '💡 Рекомендация: переработайте текст вручную или воспользуйтесь функцией «Переписать» для снижения ИИ-показателя.';
     } else if (bor >= 50 || (bor >= 35 && ai >= 35)) {
-        // Высокие заимствования
         icon = '🔴'; titleColor = '#ef4444'; borderColor = '#ef444433'; bgColor = '#1e0b0b';
         titleText = 'Текст не является оригинальным';
         text = `Анализ выявил высокую степень заимствований (${bor}%) и/или признаки ИИ-генерации (${ai}%). `
-             + (sources > 0 ? `Найдено совпадений с внешними источниками: ${sources} (Wikipedia и др.). ` : '')
-             + `Оригинальный авторский контент составляет лишь ${orig}% от объёма текста, `
-             + `что указывает на преобладание несамостоятельного или машинного материала. `
+             + (sources > 0 ? `Найдено совпадений с внешними источниками: ${sources}. ` : '')
+             + `Оригинальный авторский контент составляет лишь ${orig}% от объёма текста. `
              + `Такой текст с высокой вероятностью не пройдёт проверку в системах Антиплагиат или Turnitin.`;
-        rec = '💡 Рекомендация: текст требует существенной переработки. Замените заимствованные фрагменты авторскими формулировками и проверьте ещё раз.';
-
+        rec = '💡 Рекомендация: текст требует существенной переработки. Замените заимствованные фрагменты авторскими формулировками.';
     } else {
-        // Смешанный / частично оригинален
         icon = '🟠'; titleColor = '#f97316'; borderColor = '#f9731633'; bgColor = '#1a0f00';
         titleText = 'Текст частично оригинален';
-        text = `Текст содержит смешанный контент: часть является авторской (${orig}% оригинальности), `
-             + `однако зафиксированы умеренные признаки заимствований (${bor}%) `
+        text = `Текст содержит смешанный контент: ${orig}% оригинальности, при этом зафиксированы умеренные признаки заимствований (${bor}%) `
              + (ai >= 30 ? `и элементы ИИ-генерации (${ai}%). ` : `. `)
-             + `Вероятно, текст написан человеком с использованием шаблонных конструкций, цитат или фрагментов из внешних источников. `
-             + (cit >= 20 ? `Уровень цитирования — ${cit}%, что говорит об активном использовании чужих материалов. ` : '');
-        rec = '💡 Рекомендация: при необходимости доработайте текст — уберите шаблонные фразы и оформите цитируемые источники в соответствии с требованиями.';
+             + `Вероятно, текст написан человеком с использованием шаблонных конструкций или цитат. `
+             + (cit >= 20 ? `Уровень цитирования — ${cit}%, что говорит об активном использовании чужих материалов.` : '');
+        rec = '💡 Рекомендация: уберите шаблонные фразы и правильно оформите цитируемые источники.';
     }
 
     const card = document.getElementById('summaryCard');
     card.style.borderColor = borderColor;
     card.style.background  = bgColor;
-    document.getElementById('summaryIcon').textContent   = icon;
-    document.getElementById('summaryTitle').textContent  = titleText;
-    document.getElementById('summaryTitle').style.color  = titleColor;
-    document.getElementById('summaryText').textContent   = text;
-    document.getElementById('summaryRec').textContent    = rec;
+    document.getElementById('summaryIcon').textContent  = icon;
+    document.getElementById('summaryTitle').textContent = titleText;
+    document.getElementById('summaryTitle').style.color = titleColor;
+    document.getElementById('summaryText').textContent  = text;
+    document.getElementById('summaryRec').textContent   = rec;
 }
 
+// ── Verdict ────────────────────────────────────────────────────────────────────
+function renderVerdict(d) {
+    const body = document.getElementById('verdictBody');
+    const det  = d.details || {};
+    const st   = d.stats   || {};
+    const rows = [];
+
+    let origText;
+    if (d.originality >= 70)      origText = `высокая — большая часть текста является авторской`;
+    else if (d.originality >= 40) origText = `средняя — часть текста оригинальна, но присутствуют заимствования и шаблоны`;
+    else                          origText = `низкая — большая часть совпадает с другими источниками или ИИ-генерацией`;
+    rows.push({label:'Оригинальность', val:d.originality, color:'#22c55e', text:origText});
+
+    let borText;
+    const bp = (det.borrow_phrases||[]).slice(0,2).map(p=>`«${p}»`).join(', ');
+    if (d.borrowing >= 40)      borText = `высокое — обнаружены маркеры заимствований${bp?': '+bp:''}, пассивные конструкции и длинные академические предложения`;
+    else if (d.borrowing >= 15) borText = `умеренное — присутствуют отдельные признаки заимствований${bp?' ('+bp+')':''}`;
+    else                        borText = `низкое — явных признаков заимствований не обнаружено`;
+    rows.push({label:'Заимствование', val:d.borrowing, color:'#f97316', text:borText});
+
+    let citText;
+    const qc = det.quotes_count||0, rc = det.refs_count||0;
+    if (d.citation >= 30)      citText = `значительное — найдено ${qc} цитат и ${rc} ссылок/сносок`;
+    else if (d.citation >= 10) citText = `умеренное — ${qc>0?qc+' цитаты':'отдельные ссылки на источники'}`;
+    else                       citText = `минимальное — цитат и ссылок практически нет`;
+    rows.push({label:'Цитирование', val:d.citation, color:'#6366f1', text:citText});
+
+    let aiText;
+    const ap = (det.ai_phrases||[]).slice(0,2).map(p=>`«${p}»`).join(', ');
+    if (d.ai >= 60)      aiText = `высокий — явные признаки ИИ: однородные предложения (~${st.avg_sent_len} слов)${ap?', обороты: '+ap:''}`;
+    else if (d.ai >= 30) aiText = `средний — часть написана в стиле ИИ${ap?', фразы: '+ap:''}. Возможно смешанное авторство`;
+    else                 aiText = `низкий — текст написан в живом авторском стиле`;
+    rows.push({label:'ИИ-контент', val:d.ai, color:'#ef4444', text:aiText});
+
+    body.innerHTML = rows.map(r => `
+        <div class="verdict-row">
+            <div class="verdict-label">
+                <span class="verdict-dot" style="background:${r.color}"></span>
+                <b style="color:${r.color}">${r.label} — ${r.val}%</b>
+            </div>
+            <div class="verdict-text">${r.text}.</div>
+        </div>
+    `).join('');
+}
+
+// ── Highlight ──────────────────────────────────────────────────────────────────
 function renderHighlight(sentences) {
     const card = document.getElementById('highlightCard');
     const body = document.getElementById('highlightBody');
@@ -408,6 +577,7 @@ function renderHighlight(sentences) {
     }).join('');
 }
 
+// ── Details ────────────────────────────────────────────────────────────────────
 function renderDetails(det) {
     const body = document.getElementById('detailsBody');
     body.innerHTML = '';
@@ -416,94 +586,28 @@ function renderDetails(det) {
     if (det.borrow_phrases?.length) { any=true; body.innerHTML += section('⇄ Маркеры заимствований', det.borrow_phrases, '#f97316'); }
     if (det.cited_quotes?.length)   { any=true; body.innerHTML += section('❝ Цитаты', det.cited_quotes, '#6366f1'); }
     if (det.quotes_count || det.refs_count) {
-        any=true;
+        any = true;
         body.innerHTML += `<p class="detail-note">Цитат: <b>${det.quotes_count}</b> &nbsp;|&nbsp; Ссылок/сносок: <b>${det.refs_count}</b></p>`;
     }
     document.getElementById('detailsCard').style.display = any ? 'block' : 'none';
 }
 
-function renderVerdict(d) {
-    const body = document.getElementById('verdictBody');
-    const det  = d.details || {};
-    const st   = d.stats   || {};
-    const rows = [];
-
-    // Оригинальность
-    let origText;
-    if (d.originality >= 70)
-        origText = `высокая — большая часть текста является авторской и не совпадает с найденными источниками`;
-    else if (d.originality >= 40)
-        origText = `средняя — часть текста оригинальна, но присутствуют заимствования и шаблонные конструкции`;
-    else
-        origText = `низкая — большая часть текста совпадает с другими источниками, заимствованиями или ИИ-генерацией`;
-    rows.push({label:'Оригинальность', val: d.originality, color:'#22c55e', text: origText});
-
-    // Заимствование
-    let borText;
-    const borPhrases = (det.borrow_phrases || []).slice(0,2).map(p=>`«${p}»`).join(', ');
-    if (d.borrowing >= 40)
-        borText = `высокое — обнаружены характерные маркеры заимствований${borPhrases ? ': ' + borPhrases : ''}, пассивные конструкции и длинные академические предложения`;
-    else if (d.borrowing >= 15)
-        borText = `умеренное — присутствуют отдельные признаки заимствований${borPhrases ? ' (' + borPhrases + ')' : ''}`;
-    else
-        borText = `низкое — явных признаков заимствований не обнаружено`;
-    rows.push({label:'Заимствование', val: d.borrowing, color:'#f97316', text: borText});
-
-    // Цитирование
-    let citText;
-    const qc = det.quotes_count || 0;
-    const rc = det.refs_count   || 0;
-    if (d.citation >= 30)
-        citText = `значительное — найдено ${qc} цитат в кавычках и ${rc} ссылок/сносок, что говорит об активном использовании источников`;
-    else if (d.citation >= 10)
-        citText = `умеренное — текст содержит ${qc > 0 ? qc + ' цитаты' : 'отдельные ссылки на источники'}`;
-    else
-        citText = `минимальное — цитат и ссылок на источники практически нет`;
-    rows.push({label:'Цитирование', val: d.citation, color:'#6366f1', text: citText});
-
-    // ИИ-контент
-    let aiText;
-    const aiPhrases = (det.ai_phrases || []).slice(0,2).map(p=>`«${p}»`).join(', ');
-    const avgLen = st.avg_sent_len || 0;
-    if (d.ai >= 60)
-        aiText = `высокий — текст демонстрирует явные признаки генерации ИИ: однородная длина предложений (~${avgLen} слов)${aiPhrases ? ', шаблонные обороты: ' + aiPhrases : ''}, отсутствие живой пунктуации`;
-    else if (d.ai >= 30)
-        aiText = `средний — часть текста написана в стиле ИИ${aiPhrases ? ', найдены характерные фразы: ' + aiPhrases : ''}. Возможно смешанное авторство`;
-    else
-        aiText = `низкий — текст написан в живом авторском стиле, признаки ИИ-генерации минимальны`;
-    rows.push({label:'ИИ-контент', val: d.ai, color:'#ef4444', text: aiText});
-
-    body.innerHTML = rows.map(r => `
-        <div class="verdict-row">
-            <div class="verdict-label">
-                <span class="verdict-dot" style="background:${r.color}"></span>
-                <b style="color:${r.color}">${r.label} — ${r.val}%</b>
-            </div>
-            <div class="verdict-text">${r.text}.</div>
-        </div>
-    `).join('');
-}
-
+// ── Sources ────────────────────────────────────────────────────────────────────
 function renderSources(sources, db) {
-    const card = document.getElementById('sourcesCard');
-    const list = document.getElementById('sourcesList');
+    const card   = document.getElementById('sourcesCard');
+    const list   = document.getElementById('sourcesList');
     const dbInfo = document.getElementById('dbInfo');
     list.innerHTML = '';
-
     if (db && db.total_docs > 0) {
         dbInfo.style.display = 'block';
         dbInfo.innerHTML = `📂 База текстов: <b>${db.total_docs}</b> документов. ` +
-            (db.score > 10
-                ? `Совпадение с ранее загруженными: <b style="color:#ef4444">${db.score}%</b>`
-                : `Совпадений с базой не найдено.`);
+            (db.score > 10 ? `Совпадение с ранее загруженными: <b style="color:#ef4444">${db.score}%</b>`
+                           : `Совпадений с базой не найдено.`);
     }
-
     if (!sources || !sources.length) {
-        if (db && db.total_docs > 0) { card.style.display = 'block'; }
-        else { card.style.display = 'none'; }
+        card.style.display = (db && db.total_docs > 0) ? 'block' : 'none';
         return;
     }
-
     card.style.display = 'block';
     sources.forEach(s => {
         const icon = s.source === 'Wikipedia' ? '📖' : '🌐';
@@ -519,31 +623,22 @@ function renderSources(sources, db) {
     });
 }
 
-function section(title, items, color) {
-    const tags = items.map(i => `<span class="tag" style="border-color:${color};color:${color}">«${i}»</span>`).join('');
-    return `<div class="detail-section"><div class="detail-title">${title}</div><div class="tags-wrap">${tags}</div></div>`;
-}
-
-// ── Rewrite ───────────────────────────────────────────────────────────────────
+// ── Rewrite ────────────────────────────────────────────────────────────────────
 const rwInput = document.getElementById('rwInput');
-document.getElementById('rwCharCount') && rwInput.addEventListener('input', () => {
-    document.getElementById('rwCharCount').textContent = rwInput.value.length;
-});
+rwInput.addEventListener('input', () => document.getElementById('rwCharCount').textContent = rwInput.value.length);
 
 document.getElementById('rwBtn').addEventListener('click', async () => {
     const text = rwInput.value.trim();
     if (!text) return;
     setLoad(document.getElementById('rwBtn'), true);
     document.getElementById('rwResult').style.display = 'none';
-    document.getElementById('rwError').style.display = 'none';
+    document.getElementById('rwError').style.display  = 'none';
     try {
         const res  = await fetch('/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
         const data = await res.json();
         if (data.error) { showErr('rwError', data.error); return; }
-
         document.getElementById('rwText').textContent = data.rewritten;
         document.getElementById('rwCount').textContent = data.changes.length;
-
         const ch = document.getElementById('rwChanges');
         ch.innerHTML = '';
         if (data.changes.length) {
@@ -561,15 +656,94 @@ document.getElementById('rwBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('copyBtn').addEventListener('click', () => {
-    const t = document.getElementById('rwText').textContent;
-    navigator.clipboard.writeText(t).then(() => {
+    navigator.clipboard.writeText(document.getElementById('rwText').textContent).then(() => {
         const btn = document.getElementById('copyBtn');
         btn.textContent = 'Скопировано!';
         setTimeout(() => btn.textContent = 'Скопировать', 2000);
     });
 });
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
+// ── Compare ────────────────────────────────────────────────────────────────────
+document.getElementById('cmpText1').addEventListener('input', e => document.getElementById('cmp1Count').textContent = e.target.value.length);
+document.getElementById('cmpText2').addEventListener('input', e => document.getElementById('cmp2Count').textContent = e.target.value.length);
+
+document.getElementById('cmpBtn').addEventListener('click', async () => {
+    const text1 = document.getElementById('cmpText1').value.trim();
+    const text2 = document.getElementById('cmpText2').value.trim();
+    if (!text1 || !text2) return;
+    setLoad(document.getElementById('cmpBtn'), true);
+    document.getElementById('cmpResult').style.display = 'none';
+    document.getElementById('cmpError').style.display  = 'none';
+    try {
+        const res  = await fetch('/compare_texts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text1, text2}) });
+        const data = await res.json();
+        if (data.error) { showErr('cmpError', data.error); return; }
+        showCompare(data);
+    } catch(e) { showErr('cmpError', 'Ошибка соединения'); }
+    finally { setLoad(document.getElementById('cmpBtn'), false); }
+});
+
+function showCompare(d) {
+    const sim = d.similarity;
+    let color, verdict;
+    if      (sim <= 15) { color = '#22c55e'; verdict = 'Тексты уникальны — совпадений практически нет'; }
+    else if (sim <= 35) { color = '#eab308'; verdict = 'Незначительное сходство — тексты частично перекликаются'; }
+    else if (sim <= 60) { color = '#f97316'; verdict = 'Умеренное совпадение — тексты схожи по содержанию'; }
+    else                { color = '#ef4444'; verdict = 'Высокое совпадение — тексты очень похожи или идентичны'; }
+
+    document.getElementById('cmpPercent').textContent = sim + '%';
+    document.getElementById('cmpPercent').style.color = color;
+    document.getElementById('cmpVerdict').textContent = verdict;
+    document.getElementById('cmpStats').textContent =
+        `Совпадающих фрагментов: ${d.shared}  |  Фрагментов в тексте 1: ${d.total1}  |  Фрагментов в тексте 2: ${d.total2}`;
+    document.getElementById('cmpResult').style.display = 'block';
+}
+
+// ── History ────────────────────────────────────────────────────────────────────
+async function loadHistory() {
+    const el = document.getElementById('historyContent');
+    el.innerHTML = '<div class="history-placeholder">Загрузка...</div>';
+    try {
+        const res    = await fetch('/api/history');
+        const checks = await res.json();
+        historyLoaded = true;
+        if (!checks.length) {
+            el.innerHTML = '<div class="history-placeholder">Проверок пока нет. Проверьте первый текст!</div>';
+            return;
+        }
+        el.innerHTML = `
+            <div class="history-header-row">
+                <span>${checks.length} проверок</span>
+                <button class="btn-secondary" style="font-size:0.8rem;padding:5px 12px" onclick="historyLoaded=false;loadHistory()">Обновить</button>
+            </div>` +
+            checks.map(c => `
+            <div class="history-item">
+                <div class="history-meta">
+                    <span class="history-date">${fmtDate(c.created)}</span>
+                    <span class="history-chars">${c.char_count} символов</span>
+                </div>
+                <div class="history-snippet">${esc(c.text_snippet)}</div>
+                <div class="history-badges">
+                    <span class="hbadge" style="color:#22c55e;border-color:#22c55e33">О: ${c.originality}%</span>
+                    <span class="hbadge" style="color:#f97316;border-color:#f9731633">З: ${c.borrowing}%</span>
+                    <span class="hbadge" style="color:#6366f1;border-color:#6366f133">Ц: ${c.citation}%</span>
+                    <span class="hbadge" style="color:#ef4444;border-color:#ef444433">ИИ: ${c.ai}%</span>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        el.innerHTML = '<div class="history-placeholder">Ошибка загрузки истории</div>';
+    }
+}
+
+function fmtDate(str) {
+    return new Date(str + 'Z').toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────────
+function section(title, items, color) {
+    const tags = items.map(i => `<span class="tag" style="border-color:${color};color:${color}">«${i}»</span>`).join('');
+    return `<div class="detail-section"><div class="detail-title">${title}</div><div class="tags-wrap">${tags}</div></div>`;
+}
 function setLoad(btn, on) {
     btn.disabled = on;
     btn.querySelector('.btn-text').style.display = on ? 'none' : '';
@@ -580,7 +754,7 @@ function showErr(id, msg) {
     el.textContent = msg;
     el.style.display = 'block';
 }
-function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>

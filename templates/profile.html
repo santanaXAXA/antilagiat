@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — Люблю Лейлу</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Люблю Лейлу</h1>
+        <div class="user-bar">
+            <span class="user-name">👤 {{ username }}</span>
+            <a href="/" class="btn-nav">← Главная</a>
+            {% if is_admin %}<a href="/admin" class="btn-nav btn-admin">⚙ Админ</a>{% endif %}
+            <a href="/logout" class="btn-logout">Выйти</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="result-card" style="margin-bottom:16px">
+            <h3 class="card-title">Профиль пользователя</h3>
+            <div class="profile-info">
+                <div class="profile-avatar">{{ user.username[0]|upper }}</div>
+                <div class="profile-details">
+                    <div class="profile-name">{{ user.username }}</div>
+                    <div class="profile-email">{{ user.email }}</div>
+                    <div class="profile-joined">Зарегистрирован: {{ user.created[:10] }}</div>
+                    {% if user.is_admin %}<span class="admin-badge">👑 Администратор</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:16px">
+            <div class="stat-item">
+                <span class="stat-val" style="color:#6366f1">{{ stats.total_checks }}</span>
+                <span class="stat-label">всего проверок</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" style="color:#22c55e">{{ stats.avg_originality }}%</span>
+                <span class="stat-label">средняя оригинальность</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" style="color:#a855f7">{{ stats.best_originality }}%</span>
+                <span class="stat-label">лучший результат</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" style="color:#f97316">{{ stats.today_checks }}</span>
+                <span class="stat-label">проверок сегодня</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" style="color:#64748b">{{ daily_limit }}</span>
+                <span class="stat-label">лимит в день</span>
+            </div>
+        </div>
+
+        {% if checks %}
+        <div class="result-card">
+            <h3 class="card-title">Последние проверки</h3>
+            {% for c in checks %}
+            <div class="history-item">
+                <div class="history-meta">
+                    <span class="history-date">{{ c.created[:16].replace('T',' ') }}</span>
+                    <span class="history-chars">{{ c.char_count }} символов</span>
+                </div>
+                <div class="history-snippet">{{ c.text_snippet }}</div>
+                <div class="history-badges">
+                    <span class="hbadge" style="color:#22c55e;border-color:#22c55e33">О: {{ c.originality }}%</span>
+                    <span class="hbadge" style="color:#f97316;border-color:#f9731633">З: {{ c.borrowing }}%</span>
+                    <span class="hbadge" style="color:#6366f1;border-color:#6366f133">Ц: {{ c.citation }}%</span>
+                    <span class="hbadge" style="color:#ef4444;border-color:#ef444433">ИИ: {{ c.ai }}%</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="result-card" style="text-align:center;color:#64748b;padding:40px">
+            Проверок пока нет. <a href="/" style="color:#6366f1">Проверить первый текст →</a>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer><p>Люблю Лейлу &bull; Профиль</p></footer>
+</div>
+</body>
+</html>

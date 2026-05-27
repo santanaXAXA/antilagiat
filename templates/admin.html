@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ — Люблю Лейлу</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Люблю Лейлу</h1>
+        <div class="user-bar">
+            <span class="user-name">👑 {{ username }}</span>
+            <a href="/" class="btn-nav">← Главная</a>
+            <a href="/logout" class="btn-logout">Выйти</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="result-card" style="margin-bottom:16px">
+            <h3 class="card-title">Панель администратора</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-val" style="color:#6366f1">{{ stats.total_users }}</span>
+                    <span class="stat-label">пользователей</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val" style="color:#22c55e">{{ stats.total_checks }}</span>
+                    <span class="stat-label">всего проверок</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val" style="color:#f97316">{{ stats.today_checks }}</span>
+                    <span class="stat-label">проверок сегодня</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val" style="color:#a855f7">{{ stats.avg_originality }}%</span>
+                    <span class="stat-label">средняя оригинальность</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <h3 class="card-title">Пользователи</h3>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Имя</th>
+                            <th>Email</th>
+                            <th>Зарегистрирован</th>
+                            <th>Проверок</th>
+                            <th>Последняя</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td style="color:#64748b">{{ u.id }}</td>
+                            <td>
+                                {{ u.username }}
+                                {% if u.is_admin %}<span class="admin-badge" style="font-size:0.7rem">👑</span>{% endif %}
+                            </td>
+                            <td style="color:#94a3b8">{{ u.email }}</td>
+                            <td style="color:#64748b">{{ u.created[:10] }}</td>
+                            <td style="color:#6366f1;font-weight:700">{{ u.total_checks or 0 }}</td>
+                            <td style="color:#64748b">
+                                {% if u.last_check %}{{ u.last_check[:10] }}{% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer><p>Люблю Лейлу &bull; Панель администратора</p></footer>
+</div>
+</body>
+</html>
