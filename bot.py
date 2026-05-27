@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import logging
+import io
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from analyzer import analyze
@@ -12,15 +13,42 @@ logging.basicConfig(level=logging.WARNING)
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Привет! Отправь мне текст — я проверю его на ИИ-контент, "
-        "заимствования и оригинальность.\n\n"
+        "Привет! Отправь мне текст или файл (.txt / .docx) — "
+        "я проверю его на ИИ-контент, заимствования и оригинальность.\n\n"
         "Минимум 50 символов, максимум 10 000."
     )
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
+def format_result(d: dict) -> str:
+    verdict_ai = (
+        "✅ Человек" if d["ai"] < 30
+        else ("⚠️ Смешанный" if d["ai"] < 60 else "🤖 ИИ")
+    )
 
+    lines = [
+        "📊 *Результат проверки*\n",
+        f"✦ Оригинальность:  *{d['originality']}%*",
+        f"⇄ Заимствование:   *{d['borrowing']}%*",
+        f"❝ Цитирование:     *{d['citation']}%*",
+        f"⚡ ИИ-контент:     *{d['ai']}%*  {verdict_ai}",
+        "",
+        "📝 *Статистика*",
+        f"Слов: {d['stats']['words']} | Предложений: {d['stats']['sentences']} | Уникальных: {d['stats']['unique_words']}",
+        f"Средняя длина предложения: {d['stats']['avg_sent_len']} слов",
+    ]
+
+    if d["details"]["ai_phrases"]:
+        phrases = ", ".join(f'«{p}»' for p in d["details"]["ai_phrases"][:3])
+        lines += ["", f"🔍 *Маркеры ИИ:* {phrases}"]
+
+    if d["details"]["borrow_phrases"]:
+        phrases = ", ".join(f'«{p}»' for p in d["details"]["borrow_phrases"][:3])
+        lines += [f"📚 *Маркеры заимствований:* {phrases}"]
+
+    return "\n".join(lines)
+
+
+async def process_text(update: Update, text: str):
     if len(text) < 50:
         await update.message.reply_text("Текст слишком короткий. Нужно минимум 50 символов.")
         return
@@ -28,34 +56,51 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Текст слишком длинный. Максимум 10 000 символов.")
         return
 
-    await update.message.reply_text("Анализирую...")
-
+    msg = await update.message.reply_text("⏳ Анализирую...")
     d = analyze(text)
+    await msg.edit_text(format_result(d), parse_mode="Markdown")
 
-    verdict_ai = "✅ Человек" if d["ai"] < 30 else ("⚠️ Смешанный" if d["ai"] < 60 else "🤖 ИИ")
 
-    msg = (
-        f"📊 *Результат проверки*\n\n"
-        f"✦ Оригинальность:  *{d['originality']}%*\n"
-        f"⇄ Заимствование:   *{d['borrowing']}%*\n"
-        f"❝ Цитирование:     *{d['citation']}%*\n"
-        f"⚡ ИИ-контент:     *{d['ai']}%*  {verdict_ai}\n\n"
-        f"📝 *Статистика*\n"
-        f"Слов: {d['stats']['words']} | "
-        f"Предложений: {d['stats']['sentences']} | "
-        f"Уникальных слов: {d['stats']['unique_words']}\n"
-        f"Средняя длина предложения: {d['stats']['avg_sent_len']} слов\n"
-    )
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await process_text(update, update.message.text.strip())
 
-    if d["details"]["ai_phrases"]:
-        phrases = ", ".join(f'«{p}»' for p in d["details"]["ai_phrases"][:3])
-        msg += f"\n🔍 *Маркеры ИИ:* {phrases}"
 
-    if d["details"]["borrow_phrases"]:
-        phrases = ", ".join(f'«{p}»' for p in d["details"]["borrow_phrases"][:3])
-        msg += f"\n📚 *Маркеры заимствований:* {phrases}"
+async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    doc = update.message.document
+    name = doc.file_name or ""
 
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    if not (name.endswith(".txt") or name.endswith(".docx")):
+        await update.message.reply_text("Поддерживаются только файлы .txt и .docx")
+        return
+
+    msg = await update.message.reply_text("📂 Читаю файл...")
+
+    file = await doc.get_file()
+    buf = io.BytesIO()
+    await file.download_to_memory(buf)
+    buf.seek(0)
+
+    try:
+        if name.endswith(".txt"):
+            text = buf.read().decode("utf-8", errors="ignore")
+        else:
+            from docx import Document
+            document = Document(buf)
+            text = "\n".join(p.text for p in document.paragraphs if p.text.strip())
+    except Exception as e:
+        await msg.edit_text(f"Не удалось прочитать файл: {e}")
+        return
+
+    text = text.strip()
+    if len(text) < 50:
+        await msg.edit_text("Файл слишком короткий или пустой (минимум 50 символов).")
+        return
+    if len(text) > 10000:
+        text = text[:10000]
+
+    await msg.edit_text("⏳ Анализирую...")
+    d = analyze(text)
+    await msg.edit_text(format_result(d), parse_mode="Markdown")
 
 
 def run_bot():
@@ -64,6 +109,7 @@ def run_bot():
 
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     loop.run_until_complete(app.run_polling(drop_pending_updates=True))
