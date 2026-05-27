@@ -8,7 +8,8 @@ from analyzer import analyze
 
 BOT_TOKEN = "8945571583:AAEhedUwZ240ed7sHjHKKllPHEleV7Adkms"
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -104,15 +105,19 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def run_bot():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", cmd_start))
-    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+        app = Application.builder().token(BOT_TOKEN).build()
+        app.add_handler(CommandHandler("start", cmd_start))
+        app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
-    loop.run_until_complete(app.run_polling(drop_pending_updates=True))
+        logger.info("Telegram bot starting...")
+        loop.run_until_complete(app.run_polling(drop_pending_updates=True))
+    except Exception as e:
+        logger.error(f"Bot crashed: {e}", exc_info=True)
 
 
 def start_bot_thread():
