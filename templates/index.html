@@ -87,9 +87,19 @@
                     </div>
                 </div>
 
+                <!-- Итог -->
+                <div id="summaryCard" class="summary-card">
+                    <div class="summary-icon" id="summaryIcon"></div>
+                    <div class="summary-content">
+                        <div class="summary-title" id="summaryTitle"></div>
+                        <div class="summary-text" id="summaryText"></div>
+                        <div class="summary-rec" id="summaryRec"></div>
+                    </div>
+                </div>
+
                 <!-- Вердикт -->
                 <div class="result-card" id="verdictCard">
-                    <h3 class="card-title">Вердикт</h3>
+                    <h3 class="card-title">Вердикт по критериям</h3>
                     <div id="verdictBody" class="verdict-body"></div>
                 </div>
 
@@ -294,6 +304,7 @@ function showResult(d) {
     document.getElementById('statUnique').textContent = s.unique_words.toLocaleString();
     document.getElementById('statAvg').textContent    = s.avg_sent_len;
 
+    renderSummary(d);
     renderVerdict(d);
     renderHighlight(d.sentence_scores);
     renderDetails(d.details);
@@ -301,6 +312,81 @@ function showResult(d) {
 
     document.getElementById('result').style.display = 'block';
     document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderSummary(d) {
+    const orig = d.originality, bor = d.borrowing, ai = d.ai, cit = d.citation;
+    const sources = (d.sources || []).length;
+    const st = d.stats || {};
+
+    let icon, titleText, titleColor, borderColor, bgColor, text, rec;
+
+    if (orig >= 70 && bor <= 20 && ai <= 25) {
+        // Полностью оригинален
+        icon = '✅'; titleColor = '#22c55e'; borderColor = '#22c55e33'; bgColor = '#0d2318';
+        titleText = 'Текст полностью оригинален';
+        text = `Анализ не выявил значимых признаков заимствований из внешних источников или ИИ-генерации. `
+             + `Словарный запас разнообразен (${st.unique_words || '—'} уникальных слов из ${st.words || '—'}), `
+             + `длина предложений варьируется естественным образом, характерные шаблонные обороты отсутствуют. `
+             + (sources > 0
+                ? `Несмотря на совпадение отдельных фраз с открытыми источниками (${sources} шт.), общий контент остаётся авторским.`
+                : `Совпадений с известными источниками обнаружено не было.`);
+        rec = '💡 Рекомендация: текст готов к публикации или сдаче — он с высокой вероятностью пройдёт проверку антиплагиат-систем.';
+
+    } else if (orig >= 50 && bor <= 35 && ai <= 45) {
+        // Преимущественно оригинален
+        icon = '🟡'; titleColor = '#eab308'; borderColor = '#eab30833'; bgColor = '#1a1800';
+        titleText = 'Текст преимущественно оригинален';
+        text = `Большая часть содержимого является авторской, однако анализ зафиксировал отдельные признаки заимствований `
+             + `(${bor}%) и элементы ИИ-стиля (${ai}%). `
+             + (d.details?.borrow_phrases?.length
+                ? `Обнаружены характерные академические обороты: «${d.details.borrow_phrases.slice(0,2).join('», «')}». `
+                : '')
+             + `Структура и лексика в целом соответствуют живому тексту, но отдельные фрагменты могут быть восприняты системами как нетипичные для человека.`;
+        rec = '💡 Рекомендация: используйте вкладку «Переписать под человека», чтобы заменить шаблонные обороты и улучшить показатель оригинальности.';
+
+    } else if (ai >= 60 && bor < 40) {
+        // Написан ИИ
+        icon = '🤖'; titleColor = '#ef4444'; borderColor = '#ef444433'; bgColor = '#1e0b0b';
+        titleText = 'Текст написан с помощью ИИ';
+        text = `Анализ с высокой степенью уверенности определил текст как сгенерированный ИИ-системой. `
+             + `Признаки: однородная длина предложений (~${st.avg_sent_len} слов), `
+             + (d.details?.ai_phrases?.length ? `типичные ИИ-обороты («${d.details.ai_phrases.slice(0,3).join('», «')}»), ` : '')
+             + `низкий уровень «пульсации» (burstiness) текста и высокая предсказуемость лексических переходов. `
+             + `Оригинальность составляет лишь ${orig}%, что критически мало для самостоятельной работы.`;
+        rec = '💡 Рекомендация: переработайте текст вручную или воспользуйтесь функцией «Переписать под человека» для снижения ИИ-показателя.';
+
+    } else if (bor >= 50 || (bor >= 35 && ai >= 35)) {
+        // Высокие заимствования
+        icon = '🔴'; titleColor = '#ef4444'; borderColor = '#ef444433'; bgColor = '#1e0b0b';
+        titleText = 'Текст не является оригинальным';
+        text = `Анализ выявил высокую степень заимствований (${bor}%) и/или признаки ИИ-генерации (${ai}%). `
+             + (sources > 0 ? `Найдено совпадений с внешними источниками: ${sources} (Wikipedia и др.). ` : '')
+             + `Оригинальный авторский контент составляет лишь ${orig}% от объёма текста, `
+             + `что указывает на преобладание несамостоятельного или машинного материала. `
+             + `Такой текст с высокой вероятностью не пройдёт проверку в системах Антиплагиат или Turnitin.`;
+        rec = '💡 Рекомендация: текст требует существенной переработки. Замените заимствованные фрагменты авторскими формулировками и проверьте ещё раз.';
+
+    } else {
+        // Смешанный / частично оригинален
+        icon = '🟠'; titleColor = '#f97316'; borderColor = '#f9731633'; bgColor = '#1a0f00';
+        titleText = 'Текст частично оригинален';
+        text = `Текст содержит смешанный контент: часть является авторской (${orig}% оригинальности), `
+             + `однако зафиксированы умеренные признаки заимствований (${bor}%) `
+             + (ai >= 30 ? `и элементы ИИ-генерации (${ai}%). ` : `. `)
+             + `Вероятно, текст написан человеком с использованием шаблонных конструкций, цитат или фрагментов из внешних источников. `
+             + (cit >= 20 ? `Уровень цитирования — ${cit}%, что говорит об активном использовании чужих материалов. ` : '');
+        rec = '💡 Рекомендация: при необходимости доработайте текст — уберите шаблонные фразы и оформите цитируемые источники в соответствии с требованиями.';
+    }
+
+    const card = document.getElementById('summaryCard');
+    card.style.borderColor = borderColor;
+    card.style.background  = bgColor;
+    document.getElementById('summaryIcon').textContent   = icon;
+    document.getElementById('summaryTitle').textContent  = titleText;
+    document.getElementById('summaryTitle').style.color  = titleColor;
+    document.getElementById('summaryText').textContent   = text;
+    document.getElementById('summaryRec').textContent    = rec;
 }
 
 function renderHighlight(sentences) {
