@@ -66,41 +66,41 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    doc = update.message.document
-    name = doc.file_name or ""
-
-    if not (name.endswith(".txt") or name.endswith(".docx")):
-        await update.message.reply_text("Поддерживаются только файлы .txt и .docx")
-        return
-
-    msg = await update.message.reply_text("📂 Читаю файл...")
-
-    file = await doc.get_file()
-    buf = io.BytesIO()
-    await file.download_to_memory(buf)
-    buf.seek(0)
-
     try:
+        doc = update.message.document
+        name = (doc.file_name or "").lower()
+
+        if not (name.endswith(".txt") or name.endswith(".docx")):
+            await update.message.reply_text("Поддерживаются только файлы .txt и .docx")
+            return
+
+        msg = await update.message.reply_text("📂 Читаю файл...")
+
+        file = await doc.get_file()
+        buf = io.BytesIO()
+        await file.download_to_memory(out=buf)
+        buf.seek(0)
+
         if name.endswith(".txt"):
             text = buf.read().decode("utf-8", errors="ignore")
         else:
             from docx import Document
             document = Document(buf)
             text = "\n".join(p.text for p in document.paragraphs if p.text.strip())
+
+        text = text.strip()
+        if len(text) < 50:
+            await msg.edit_text("Файл слишком короткий или пустой (минимум 50 символов).")
+            return
+        if len(text) > 10000:
+            text = text[:10000]
+
+        await msg.edit_text("⏳ Анализирую...")
+        d = analyze(text)
+        await msg.edit_text(format_result(d), parse_mode="Markdown")
+
     except Exception as e:
-        await msg.edit_text(f"Не удалось прочитать файл: {e}")
-        return
-
-    text = text.strip()
-    if len(text) < 50:
-        await msg.edit_text("Файл слишком короткий или пустой (минимум 50 символов).")
-        return
-    if len(text) > 10000:
-        text = text[:10000]
-
-    await msg.edit_text("⏳ Анализирую...")
-    d = analyze(text)
-    await msg.edit_text(format_result(d), parse_mode="Markdown")
+        await update.message.reply_text(f"Ошибка при обработке файла: {e}")
 
 
 def run_bot():
