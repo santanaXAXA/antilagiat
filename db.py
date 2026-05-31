@@ -3,7 +3,7 @@ import hashlib
 import json
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "submissions.db")
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "submissions.db"))
 
 
 def _open():
